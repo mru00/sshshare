@@ -36,7 +36,13 @@
 			<Add option="`pkg-config gtk+-2.0 --libs` -lxerces-c" />
 			<Add option="-lutil" />
 		</Linker>
-		<Unit filename="main.cxx" />
+		<Unit filename="echoprocess.cxx" />
+		<Unit filename="echoprocess.hxx" />
+		<Unit filename="linewiseprocess.cxx" />
+		<Unit filename="linewiseprocess.hxx" />
+		<Unit filename="main.cxx">
+			<Option link="0" />
+		</Unit>
 		<Unit filename="process.cxx" />
 		<Unit filename="process.hxx" />
 		<Unit filename="sampleshare.xml" />
@@ -44,9 +50,12 @@
 		<Unit filename="scp.hxx" />
 		<Unit filename="shares.cxx" />
 		<Unit filename="shares.hxx" />
+		<Unit filename="sshprocess.cxx" />
+		<Unit filename="sshprocess.hxx" />
 		<Unit filename="sshshare.cxx" />
 		<Unit filename="sshshare.hxx" />
 		<Unit filename="sshshare.xsd" />
+		<Unit filename="test_main.cxx" />
 		<Extensions>
 			<code_completion />
 			<envvars />

@@ -1,17 +1,9 @@
-
-//#include <pty.h>
-//#include <stdlib.h>
-//#include <sys/types.h>
-//#include <sys/wait.h>
-//#include <stdio.h>
-//#include <unistd.h>
-//#include <errno.h>
 #include <gtk/gtk.h>
-//#include <fcntl.h>
 #include <iostream>
 
 #include "sshshare.hxx"
 #include "scp.hxx"
+#include "shares.hxx"
 
 
 using namespace std;
@@ -85,16 +77,20 @@ static void share_selection_changed_cb (GtkTreeSelection *selection, gpointer da
     GtkTreeIter iter;
     GtkTreeModel *model;
     int index;
+    gchar* name;
 
     if (gtk_tree_selection_get_selected (selection, &model, &iter))
     {
-        gtk_tree_model_get (model, &iter, 0, &index, -1);
+        gtk_tree_model_get (model, &iter, 0, &index, 1, &name, -1);
 
         share_t& share = shares_ptr->share()[index];
 
 
         populate_users_list(list_store_users, share.users());
         populate_files_list(list_store_files, share.files());
+
+        create_share(name, share.users());
+        g_free(name);
     }
 }
 
@@ -274,6 +270,7 @@ int main (int argc, char *argv[])
     g_log_set_handler ("Gtk", G_LOG_LEVEL_WARNING, (GLogFunc) gtk_false, NULL);
     gtk_init (&argc, &argv);
     g_log_set_handler ("Gtk", G_LOG_LEVEL_WARNING, g_log_default_handler, NULL);
+
 
 
     get_file("asdf", on_progress, on_status_change);
