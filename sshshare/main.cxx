@@ -257,6 +257,14 @@ static GtkWidget* create_ui()
     return win;
 }
 
+static void on_progress(int prog) {
+    printf("progress: %d\n", prog);
+}
+
+static void on_status_change(int status, const char* description) {
+    printf("status: %d / %s\n", status, description);
+    fflush (stdout);
+}
 
 
 int main (int argc, char *argv[])
@@ -268,7 +276,7 @@ int main (int argc, char *argv[])
     g_log_set_handler ("Gtk", G_LOG_LEVEL_WARNING, g_log_default_handler, NULL);
 
 
-    get_file("asdf");
+    get_file("asdf", on_progress, on_status_change);
 
     shares_ptr = shares("sampleshare.xml");
 

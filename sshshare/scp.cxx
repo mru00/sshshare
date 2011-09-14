@@ -7,38 +7,30 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#include "scp.hxx"
+#include <string>
+#include <vector>
 
+#include "scp.hxx"
+#include "process.hxx"
+
+using namespace std;
 
 // http://cwshep.blogspot.com/2009/06/showing-scp-progress-using-zenity.html
+// http://rmathew.blogspot.com/2006/09/terminal-sickness.html
 
-int get_file(const char* filename)
+class ScpProcess : public Process
 {
-    int pid;
-    int status;
-    int read_fd;
 
-    char* argv[] = {"/usr/bin/scp", "-B", "-v", "mru@sisyphus.teil.cc:pulltester-trac.tar.gz", ".", NULL};
-
-    switch(pid = forkpty(&read_fd, NULL, NULL, NULL))
+public:
+    virtual void onStdout(string line)
     {
-    case -1: // ERROR!
-        printf("Error with code %i\n", errno);
-        return errno;
-    case 0: // Child
-    {
-        status = execv(argv[0], argv);
-        break;
-    }
-    default:
-    {
-        FILE* f = fdopen(read_fd, "r");
-        char c, c1, c2;
-        int progress = 0;
-//reading character by character isn't horribly efficient...
-        while((c = fgetc(f)) != -1)
+        for (string::iterator it = line.begin(); it != line.end(); it ++ )
         {
-            if (c == '%')
+            char c1, c2;
+            int progress;
+            int last_progress = -1;
+
+            if (*it == '%')
             {
                 if (c1 == ' ')
                     progress = c2 - '0';
@@ -47,20 +39,60 @@ int get_file(const char* filename)
                 else
                     progress = (c1-'0')*10+(c2-'0');
 
-                printf("progress: %d\n",progress);
+                if (progress != last_progress)
+                {
+                    last_progress = progress;
+                    onProgress(progress);
+                }
             }
             fflush(stdout);
             c1 = c2;
-            c2 = c;
+            c2 = *it;
         }
 
-        fflush (f);
-        wait (0);
     }
-    // Process the results from the child
-    printf("Parent Exiting\n");
-    break;
+    virtual void onStderr(string line)
+    {
+    }
+    virtual void onStateChange()
+    {
+        printf("onstatechange");
+    }
+    virtual void onSuccess()
+    {
+        printf("success!");
+    }
+    virtual void onFail()
+    {
+        printf("fail!");
     }
 
-    return 0;
+    virtual void onProgress(int progress)
+    {
+        printf("progress: %d\n", progress);
+    }
+};
+
+
+
+int get_file(const char* filename, void (*on_progress)(int), void (*on_status_change)(int, const char*))
+{
+    char fn_from[FILENAME_MAX];
+    char fn_to[FILENAME_MAX];
+
+
+    snprintf(fn_from, FILENAME_MAX, "%s", filename);
+    snprintf(fn_to, FILENAME_MAX, "mru@sisyphus.teil.cc:%s", "test.txt");
+
+
+    vector<string> argv;
+    argv.push_back("/usr/bin/scp");
+    argv.push_back("-B");
+    argv.push_back(fn_to);
+    argv.push_back(".");
+
+    ScpProcess scp;
+
+    return scp.run(argv[0], argv);
+
 }

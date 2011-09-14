@@ -37,9 +37,13 @@
 			<Add option="-lutil" />
 		</Linker>
 		<Unit filename="main.cxx" />
+		<Unit filename="process.cxx" />
+		<Unit filename="process.hxx" />
 		<Unit filename="sampleshare.xml" />
 		<Unit filename="scp.cxx" />
-		<Unit filename="scp.h" />
+		<Unit filename="scp.hxx" />
+		<Unit filename="shares.cxx" />
+		<Unit filename="shares.hxx" />
 		<Unit filename="sshshare.cxx" />
 		<Unit filename="sshshare.hxx" />
 		<Unit filename="sshshare.xsd" />
