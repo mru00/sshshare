@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<shares xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/mru/dev/06multimedia/sshshare/sshshare/sshshare.xsd">
+    <share>
+        <name>firstshare</name>
+        <users>
+            <user><name>firstuser</name><password>test</password>
+            </user>
+        </users>
+        <files>
+            <file>
+                <description>testfile</description>
+                <local>/home/asdf/asdf/asdf</local>
+                <remote>/home/public_html_shareblabla</remote>
+            </file>
+        </files>
+    </share>
+
+    <share>
+        <name>secondshare</name>
+        <users>
+            <user>
+                <name>seconduser1</name><password>test1</password>
+            </user>
+            <user>
+                <name>seconduser2</name><password>test2</password>
+            </user>
+        </users>
+        <files/>
+    </share>
+
+
+</shares>
