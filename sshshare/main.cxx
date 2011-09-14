@@ -1,14 +1,18 @@
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
+
+//#include <pty.h>
+//#include <stdlib.h>
+//#include <sys/types.h>
+//#include <sys/wait.h>
+//#include <stdio.h>
+//#include <unistd.h>
+//#include <errno.h>
 #include <gtk/gtk.h>
-#include <fcntl.h>
+//#include <fcntl.h>
 #include <iostream>
 
 #include "sshshare.hxx"
+#include "scp.hxx"
+
 
 using namespace std;
 
@@ -253,108 +257,7 @@ static GtkWidget* create_ui()
     return win;
 }
 
-static int get_file(string filename)
-{
-    int pid;
-    int status;
 
-    char* argv[] = {"/usr/bin/scp", "-B", "-v", "mru@sisyphus.teil.cc:test.txt", ".", NULL};
-    //char* argv[] = {"/home/mru/dev/06multimedia/sshshare/test_piper/bin/Debug/test_piper", NULL};
-
-
-    int pfd[2];
-    char buf;
-
-    if (pipe(pfd) == -1)
-    {
-        perror("pipe");
-        exit(EXIT_FAILURE);
-    }
-
-    switch(pid = fork())
-    {
-    case -1: // ERROR!
-        printf("Error with code %i\n", errno);
-        return errno;
-    case 0: // Child
-    {
-        int read_fd = pfd[0];
-        int write_fd = pfd[1];
-
-
-
-        close(read_fd);
-        dup2(write_fd, 1);
-        dup2(write_fd, 2);
-        //close(write_fd);
-
-        setvbuf(stdout,(char*)NULL,_IONBF,0);
-        setvbuf(stderr,(char*)NULL,_IONBF,0);
-
-        printf("Child Running\n");
-
-        status = execv(argv[0], argv);
-        break;
-    }
-    default:
-    {
-        int read_fd = pfd[0];
-        int write_fd = pfd[1];
-        close(write_fd);
-
-        int retval;
-
-        setvbuf(stdout,(char*)NULL,_IONBF,0);
-        setvbuf(stderr,(char*)NULL,_IONBF,0);
-
-        while ( (retval = waitpid(-1, &status, WNOHANG)) == 0)
-        {
-            printf("still running\n");
-
-
-            while (1 )
-            {
-
-                fd_set rfds;
-                FD_ZERO(&rfds);
-                FD_SET(read_fd, &rfds);
-                struct timeval tv;
-                tv.tv_usec = 5;
-                tv.tv_sec = 0;
-
-                int retval = select(read_fd+1, &rfds, NULL, NULL, &tv);
-
-                if (retval > 0)
-                {
-                    read(read_fd, &buf, 1);
-                    printf("%c", buf);
-                }
-                else if (retval == -1)
-                {
-                    printf("error select\n");
-                    break;
-                }
-                else if (retval == 0) break;
-            }
-
-            fflush(stdout);
-            sleep(1);
-        }
-
-        int r;
-        while (( r = read(read_fd, &buf, 1))> 0) {
-                printf("read: %c/%d\n", buf, buf);
-        }
-        close(read_fd);
-
-    }
-    // Process the results from the child
-    printf("Parent Exiting\n");
-    break;
-    }
-
-    return 0;
-}
 
 int main (int argc, char *argv[])
 {

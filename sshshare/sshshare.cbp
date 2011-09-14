@@ -34,10 +34,15 @@
 		</Compiler>
 		<Linker>
 			<Add option="`pkg-config gtk+-2.0 --libs` -lxerces-c" />
+			<Add option="-lutil" />
 		</Linker>
 		<Unit filename="main.cxx" />
+		<Unit filename="sampleshare.xml" />
+		<Unit filename="scp.cxx" />
+		<Unit filename="scp.h" />
 		<Unit filename="sshshare.cxx" />
 		<Unit filename="sshshare.hxx" />
+		<Unit filename="sshshare.xsd" />
 		<Extensions>
 			<code_completion />
 			<envvars />
