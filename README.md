@@ -12,7 +12,7 @@ The software maintains the .htaccess and htpasswd and creates the necessary dire
 Screenshots
 -----------
 
-!(doc/screenshot1.png)
+![screenshot](https://github.com/mru00/sshshare/raw/master/doc/screenshot1.png)
 
 
 
