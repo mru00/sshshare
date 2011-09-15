@@ -34,7 +34,7 @@ public:
 
         for (std::string::const_iterator it = line.begin(); it != line.end(); it ++ )
         {
-            char c1, c2;
+            char c1 = 0, c2 = 0;
             int progress;
             int last_progress = -1;
 

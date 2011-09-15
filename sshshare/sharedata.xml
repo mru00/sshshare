@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<shares xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="sshshare.xsd">
+
+  <share>
+    <name>firstshare</name>
+    <users>
+      <user>
+        <name>firstuse14ghjgh56</name>
+        <password>test1111111</password>
+      </user>
+    </users>
+  </share>
+
+  <share>
+    <name>secondshare</name>
+    <users>
+      <user>
+        <name>seconduser1</name>
+        <password>test1</password>
+      </user>
+      <user>
+        <name>seconduser2</name>
+        <password>test21</password>
+      </user>
+    </users>
+  </share>
+
+  <share>
+    <name>a24</name>
+    <users/>
+  </share>
+
+  <share>
+    <name>a543</name>
+    <users/>
+  </share>
+
+  <share>
+    <name>fotos_wien_2011</name>
+    <users>
+      <user>
+        <name>user</name>
+        <password>userpwd</password>
+      </user>
+    </users>
+  </share>
+
+  <share>
+    <name>blubb</name>
+    <users>
+      <user>
+        <name>name</name>
+        <password>password</password>
+      </user>
+    </users>
+  </share>
+
+</shares>

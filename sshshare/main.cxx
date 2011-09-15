@@ -29,7 +29,7 @@ static void dialog_warn(GtkWidget* win, const string& message)
                         GTK_DIALOG_MODAL,
                         GTK_MESSAGE_ERROR,
                         GTK_BUTTONS_CLOSE,
-                        message.c_str());
+                        "%s", message.c_str());
     gtk_dialog_run (GTK_DIALOG (dialog));
     gtk_widget_destroy (dialog);
 }

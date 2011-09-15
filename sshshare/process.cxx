@@ -56,7 +56,13 @@ int Process::start(const string& binary, const vector<string>& argv)
     else
     {
         pid = fork();
-        pipe(pfd_out);
+
+        if (pipe(pfd_out))
+        {
+            perror("pipe pfd_out failed!");
+            onFail(errno);
+            return errno;
+        }
     }
 
     int parent_stderr = dup(STDERR_FILENO);
