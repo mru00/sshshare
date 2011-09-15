@@ -6,9 +6,8 @@
 
 class Process
 {
-
     public:
-        Process();
+        Process(bool ro = true, bool re = false);
         virtual ~Process();
 
         virtual void onStateChange() = 0;
@@ -17,22 +16,23 @@ class Process
 
         virtual int start(const std::string& binary, const std::vector<std::string>& argv);
 
-        int p_in;
-        int p_out;
-        int p_err;
+        FILE* p_in;
+        FILE* p_out;
+        FILE* p_err;
 
         virtual void join();
         bool isAlive();
 
 
-        static bool fd_is_open(int fd);
-        static bool can_read_from_fd(int fd);
+        bool fd_is_open(FILE* fd);
+        bool can_read_from_fd(FILE* fd);
 
-        static bool wait_for_write(int fd);
     protected:
     private:
         int pid;
-
+        int status_last_wait;
+        bool redirect_stdout;
+        bool redirect_stderr;
 
 };
 

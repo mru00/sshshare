@@ -15,7 +15,7 @@
 using namespace std;
 
 
-LinewiseProcess::LinewiseProcess()
+LinewiseProcess::LinewiseProcess() : Process(true, false)
 {
     //ctor
 }
@@ -29,53 +29,30 @@ LinewiseProcess::~LinewiseProcess()
 void LinewiseProcess::run(const std::string& binary, const std::vector<std::string>& argv)
 {
 
-    Process::start(binary, argv);
-    char c;
+    start(binary, argv);
     string b_stdout;
     string b_stderr;
     while (isAlive())
     {
-        fd_set rfds;
-        struct timeval tv;
-        int retval;
 
-        /* Watch stdin (fd 0) to see when it has input. */
-        FD_ZERO(&rfds);
-        FD_SET(p_out, &rfds);
-        FD_SET(p_err, &rfds);
-
-        int max = 0;
-        if (p_out > max) max = p_out;
-        if (p_err > max) max = p_err;
-
-        /* Wait up to five seconds. */
-        tv.tv_sec = 0;
-        tv.tv_usec = 2000;
-
-        retval = select(max+1, &rfds, NULL, NULL, &tv);
-        /* Don't rely on the value of tv now! */
-
-        if (retval == -1)
-            perror("select()");
-        else if (retval)
+        while (p_err && can_read_from_fd(p_err) )
         {
-            /* FD_ISSET(0, &rfds) will be true. */
-
-            if (FD_ISSET(p_err, &rfds))
-            {
-                read(p_err, &c, 1);
-                append(b_stderr, c, &LinewiseProcess::onStderr);
-            }
-            if (FD_ISSET(p_out, &rfds))
-            {
-                read(p_out, &c, 1);
-                append(b_stdout, c, &LinewiseProcess::onStdout);
-            }
-        }
+            append(b_stderr, fgetc(p_err), &LinewiseProcess::onStderr);
+        };
+        while (p_out && can_read_from_fd(p_out) )
+        {
+            append(b_stdout, fgetc(p_out), &LinewiseProcess::onStdout);
+        };
     }
 
-    while (can_read_from_fd(p_err) ) { if(read(p_err, &c, 1)<=0) break; append(b_stderr, c, &LinewiseProcess::onStderr);};
-    while (can_read_from_fd(p_out) ) { if(read(p_out, &c, 1)<=0) break; append(b_stdout, c, &LinewiseProcess::onStdout);};
+    while (p_err && can_read_from_fd(p_err) )
+    {
+        append(b_stderr, fgetc(p_err), &LinewiseProcess::onStderr);
+    };
+    while (p_out && can_read_from_fd(p_out) )
+    {
+        append(b_stdout, fgetc(p_out), &LinewiseProcess::onStdout);
+    };
 
 
     join();

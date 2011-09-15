@@ -11,13 +11,23 @@
 
 int main(int argc, char** argv)
 {
+
+    {
+        cout << endl << endl << endl << "sleep" << endl;
+        vector<string> argv;
+        argv.push_back("/bin/sleep");
+        argv.push_back("3");
+        EchoProcess echo;
+        echo.run(argv[0], argv);
+    }
+
     {
         cout << endl << endl << endl << "ssh" << endl;
         SshProcess ssh;
         ssh.run();
-        ssh.write("hi there!");
-        ssh.write("hi there!");
-        ssh.write("hi there!");
+        ssh.write("hi there! 1");
+        ssh.write("hi there! 8");
+        ssh.write("hi there! 7");
         ssh.join();
     }
 

@@ -16,7 +16,7 @@ int main()
     setvbuf(stdout,(char*)NULL,_IONBF,0);
     printf("Hello world!\n");
 
-    for(i = 0; i < 3; i ++ )
+    for(i = 0; i < 5; i ++ )
     {
 
         fd_set rfds;
@@ -46,7 +46,7 @@ int main()
 
 
         fprintf( i%2 ? stdout : stderr,"i: %d %s\n", i, i%2 ? "stdout" : "stderr");
-        sleep(1);
+        usleep(1000);
     }
 
     return 0;
