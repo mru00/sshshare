@@ -14,6 +14,8 @@
 
 #include "process.hxx"
 #include "scp.hxx"
+#include "config.hxx"
+
 
 using namespace std;
 
@@ -23,14 +25,7 @@ using namespace std;
 
 int get_file(const char* filename, void (*on_progress)(int), void (*on_status_change)(int, const char*))
 {
-    char fn_from[FILENAME_MAX];
-    char fn_to[FILENAME_MAX];
-
-
-    snprintf(fn_from, FILENAME_MAX, "mru@sisyphus.teil.cc:%s", "test.txt");
-    snprintf(fn_to, FILENAME_MAX, "%s", ".");
-
-    ScpProcess scp(fn_from, fn_to);
+    ScpProcess scp(Config::makePath("test.txt"), ".");
     return scp.run();
 
 }

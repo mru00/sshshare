@@ -2,6 +2,8 @@
 #include <vector>
 
 #include "sshprocess.hxx"
+#include "config.hxx"
+
 
 using namespace std;
 
@@ -28,7 +30,8 @@ void SshProcess::write(const string& line)
     fprintf(p_in, "%s\n", line.c_str());
     fflush(p_out);
     fflush(p_err);
-    usleep(10000);
+    //usleep(10000);
+    sleep(1);
 }
 
 void SshProcess::run()
@@ -37,9 +40,8 @@ void SshProcess::run()
 #if 1
     vector<string> argv;
     argv.push_back("/usr/bin/ssh");
-    argv.push_back("mru@sisyphus.teil.cc");
-    argv.push_back("-C");
-    argv.push_back("echo sdf2435 > test.txt");
+    argv.push_back(Config::makeUrl());
+    //argv.push_back("-T");
 #else
     vector<string> argv;
     //argv.push_back("/home/mru/dev/06multimedia/sshshare/test_piper/bin/Debug/test_piper");

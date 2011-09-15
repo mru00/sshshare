@@ -59,10 +59,7 @@ int Process::start(const string& binary, const vector<string>& argv)
         pipe(pfd_out);
     }
 
-    if (!redirect_stderr)
-    {
-        pfd[1] = dup(STDERR_FILENO);
-    }
+    int parent_stderr = dup(STDERR_FILENO);
 
     if(pid == -1)
     {
@@ -98,7 +95,7 @@ int Process::start(const string& binary, const vector<string>& argv)
         }
 
         // either redirect to stderr of parent, or to pipe
-        if (dup2 (fd_err, STDERR_FILENO) < 0)
+        if (dup2 (redirect_stderr? fd_err : parent_stderr, STDERR_FILENO) < 0)
         {
             perror ("ERROR redirecting STDERR");
             exit(EXIT_FAILURE);
@@ -109,7 +106,7 @@ int Process::start(const string& binary, const vector<string>& argv)
            do not get back from the spawned process the same
            messages that we have sent it. //*/
         struct termios orig_termios;
-        if (tcgetattr (STDIN_FILENO, &orig_termios) < 0)
+        if (tcgetattr (fd_out, &orig_termios) < 0)
         {
             perror ("ERROR getting current terminal's attributes");
             return -1;
@@ -118,7 +115,7 @@ int Process::start(const string& binary, const vector<string>& argv)
         orig_termios.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
         orig_termios.c_oflag &= ~(ONLCR);
 
-        if (tcsetattr (STDIN_FILENO, TCSANOW, &orig_termios) < 0)
+        if (tcsetattr (fd_out, TCSANOW, &orig_termios) < 0)
         {
             perror ("ERROR setting current terminal's attributes");
             return -1;
@@ -138,7 +135,7 @@ int Process::start(const string& binary, const vector<string>& argv)
         }
         c_argv[i++] = NULL;
 
-        if (execvp(binary.c_str(), c_argv))
+        if (execv(binary.c_str(), c_argv))
         {
             perror("failed to execv");
             exit(EXIT_FAILURE);
@@ -166,7 +163,7 @@ int Process::start(const string& binary, const vector<string>& argv)
     setvbuf ( p_out , NULL , _IONBF , 0);
     p_err && setvbuf ( p_err , NULL , _IONBF , 0);
 
-    printf("fd's: %p %p %p %d %d %d\n", p_in, p_out, p_err, fileno(p_in), fileno(p_out), p_err && fileno(p_err));
+    printf("fd's: %p %p %p %d %d %d\n", p_in, p_out, p_err, fileno(p_in), p_out ? fileno(p_out):-1, p_err ? fileno(p_err):-1);
 
     return 0;
 }

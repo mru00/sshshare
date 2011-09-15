@@ -25,9 +25,9 @@ int main(int argc, char** argv)
         cout << endl << endl << endl << "ssh" << endl;
         SshProcess ssh;
         ssh.run();
-        ssh.write("hi there! 1");
-        ssh.write("hi there! 8");
-        ssh.write("hi there! 7");
+        ssh.write("echo hi there! 1");
+        ssh.write("echo hi there! 8");
+        ssh.write("echo hi there! 7");
         ssh.join();
     }
 
