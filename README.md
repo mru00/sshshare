@@ -39,7 +39,7 @@ Development
 -----------
 
  * Ubuntu
- * C++
+ * C++ / Code::Blocks
 
  * gtk
  * libutil
