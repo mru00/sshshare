@@ -169,7 +169,8 @@ int Process::start(const string& binary, const vector<string>& argv)
     setvbuf ( p_out , NULL , _IONBF , 0);
     p_err && setvbuf ( p_err , NULL , _IONBF , 0);
 
-    printf("fd's: %p %p %p %d %d %d\n", p_in, p_out, p_err, fileno(p_in), p_out ? fileno(p_out):-1, p_err ? fileno(p_err):-1);
+    if (print_exit_details)
+        printf("fd's: %p %p %p %d %d %d\n", p_in, p_out, p_err, fileno(p_in), p_out ? fileno(p_out):-1, p_err ? fileno(p_err):-1);
 
     return 0;
 }

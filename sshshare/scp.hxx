@@ -15,7 +15,6 @@ public:
         : from(from1), to(to1) {};
 
 
-
     int run()
     {
         std::vector<std::string> argv;
@@ -30,14 +29,14 @@ public:
 public:
     virtual void onStdout(const std::string& line)
     {
-        std::cout << "stdout: " << line << std::endl;
+        std::cout << "stdout[scp]: " << line << std::endl;
+
+        char c1 = ' ', c2 = ' ';
+        int progress;
+        int last_progress = -1;
 
         for (std::string::const_iterator it = line.begin(); it != line.end(); it ++ )
         {
-            char c1 = 0, c2 = 0;
-            int progress;
-            int last_progress = -1;
-
             if (*it == '%')
             {
                 if (c1 == ' ')
@@ -59,18 +58,22 @@ public:
         }
 
     }
+
     virtual void onStderr(const std::string& line)
     {
         std::cout << "stderr: " << line << std::endl;
     }
+
     virtual void onStateChange()
     {
         printf("onstatechange\n");
     }
+
     virtual void onSuccess()
     {
         printf("success!\n");
     }
+
     virtual void onFail(int code)
     {
         printf("fail [%d]!\n", code);
@@ -81,8 +84,5 @@ public:
         printf("progress: %d\n", progress);
     }
 };
-
-
-extern int get_file(const char* filename, void (*on_progress)(int), void (*on_status_change)(int, const char*));
 
 #endif

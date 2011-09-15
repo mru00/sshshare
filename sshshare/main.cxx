@@ -18,7 +18,8 @@ GtkWidget* list_view_users, *list_view_shares, *label_href, *label_sftp;
 static void populate_shares_list(GtkListStore* store, auto_ptr<shares_t>& shares);
 static void populate_users_list(GtkListStore* store, users_t& users);
 
-static void set_label_href(const string& share) {
+static void set_label_href(const string& share)
+{
     gtk_label_set_markup (GTK_LABEL(label_href), string("<a href=\"" + Config::makeHttpUrl(share) + "\">"+Config::makeHttpUrl(share)+"</a>").c_str());
     gtk_label_set_markup (GTK_LABEL(label_sftp), string("<a href=\"" + Config::makeSftpUrl(share) + "\">"+Config::makeSftpUrl(share)+"</a>").c_str());
 }
@@ -67,8 +68,9 @@ static void cb_add_user(GtkWidget *wid, GtkWidget *win)
         populate_users_list(list_store_users, share.users());
         g_free(name);
     }
-    else {
-    dialog_warn(win, "select share first!");
+    else
+    {
+        dialog_warn(win, "select share first!");
     }
 
 }
@@ -113,8 +115,6 @@ static void cb_new_share(GtkWidget *wid, GtkWidget *win)
             shares_ptr->share().push_back(share);
             populate_shares_list(list_store_shares, shares_ptr);
         }
-//        g_free(name);
-
     }
     gtk_widget_destroy(dialog);
 }
@@ -143,7 +143,8 @@ static void cb_apply (GtkWidget *wid, GtkWidget *win)
         }
         g_free(name);
     }
-    else {
+    else
+    {
         dialog_warn(win,"select share first");
     }
 }
@@ -283,8 +284,6 @@ static void user_cell_edited_callback (GtkCellRendererText *cell,
             populate_users_list(list_store_users, share.users());
         }
     }
-
-
 }
 
 static GtkWidget* create_users_box(GtkWidget* win)
@@ -395,18 +394,6 @@ static GtkWidget* create_ui()
     return win;
 }
 
-static void on_progress(int prog)
-{
-    printf("progress: %d\n", prog);
-}
-
-static void on_status_change(int status, const char* description)
-{
-    printf("status: %d / %s\n", status, description);
-    fflush (stdout);
-}
-
-
 int main (int argc, char *argv[])
 {
 
@@ -416,39 +403,34 @@ int main (int argc, char *argv[])
     g_log_set_handler ("Gtk", G_LOG_LEVEL_WARNING, g_log_default_handler, NULL);
 
 
+    ScpProcess(Config::makePath("shares/" + Config::xmlfilename), ".").run();
 
-    get_file("asdf", on_progress, on_status_change);
-
-    ScpProcess scp1(Config::makePath("shares/sharedata.xml"), ".");
-    scp1.run();
-
-    shares_ptr = shares("sharedata.xml");
+    try
+    {
+        shares_ptr = shares(Config::xmlfilename);
+    }
+    catch (xml_schema::parsing ex)
+    {
+        dialog_warn(NULL, "failed to load file, starting a fresh one");
+        printf ("failed to load file, starting a fresh one.");
+        shares_ptr.reset(new shares_t());
+    }
 
     GtkWidget *win = create_ui();
     populate_shares_list(list_store_shares, shares_ptr);
-
-    GError *err = NULL;
-    gtk_show_uri(gdk_screen_get_default(), string("sftp://"+Config::makeUrl()+ "/public_html/shares").c_str(),GDK_CURRENT_TIME, &err);
-    if (err != NULL)
-    {
-
-        fprintf (stderr, "Unable to read file: %s\n", err->message);
-        g_error_free (err);
-    }
 
 
     /* Enter the main loop */
     gtk_widget_show_all (win);
     gtk_main ();
 
-
     // Serialize the object model to XML.
     //
     xml_schema::namespace_infomap map;
     map[""].name = "";
-    map[""].schema = "sshshare.xsd";
+    map[""].schema = Config::xsdfilename;
 
-    std::ofstream ofs ("sharedata.xml");
+    std::ofstream ofs (Config::xmlfilename.c_str());
     shares (ofs, *shares_ptr, map);
 
     ScpProcess("sharedata.xml", Config::makePath("shares/sharedata.xml")).run();

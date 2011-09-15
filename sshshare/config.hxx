@@ -22,6 +22,8 @@ public:
 
     static const std::string servername;
     static const std::string username;
+    static const std::string xmlfilename;
+    static const std::string xsdfilename;
 };
 
 #endif // CONFIG_H

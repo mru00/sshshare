@@ -34,12 +34,4 @@
   </xs:sequence>
   </xs:complexType>
 
-
-
-<xs:simpleType name="FilePath">
-<xs:restriction base="xs:string">
-<xs:pattern value="[A-Za-z]:(\\\w+)*"/>
-</xs:restriction>
-</xs:simpleType>
-
 </xs:schema>

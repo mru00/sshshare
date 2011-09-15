@@ -23,9 +23,3 @@ using namespace std;
 // http://rmathew.blogspot.com/2006/09/terminal-sickness.html
 
 
-int get_file(const char* filename, void (*on_progress)(int), void (*on_status_change)(int, const char*))
-{
-    ScpProcess scp(Config::makePath("test.txt"), ".");
-    return scp.run();
-
-}
