@@ -251,8 +251,6 @@ class shares_t;
 class share_t;
 class users_t;
 class user_t;
-class files_t;
-class file_t;
 class FilePath;
 
 #include <memory>    // std::auto_ptr
@@ -323,7 +321,7 @@ class share_t: public ::xml_schema::type
   public:
   // name
   // 
-  typedef ::xml_schema::string name_type;
+  typedef ::xml_schema::name name_type;
   typedef ::xsd::cxx::tree::traits< name_type, char > name_traits;
 
   const name_type&
@@ -376,32 +374,13 @@ class share_t: public ::xml_schema::type
   void
   users (::std::auto_ptr< users_type > p);
 
-  // files
-  // 
-  typedef ::files_t files_type;
-  typedef ::xsd::cxx::tree::traits< files_type, char > files_traits;
-
-  const files_type&
-  files () const;
-
-  files_type&
-  files ();
-
-  void
-  files (const files_type& x);
-
-  void
-  files (::std::auto_ptr< files_type > p);
-
   // Constructors.
   //
   share_t (const name_type&,
-           const users_type&,
-           const files_type&);
+           const users_type&);
 
   share_t (const name_type&,
-           ::std::auto_ptr< users_type >&,
-           ::std::auto_ptr< files_type >&);
+           ::std::auto_ptr< users_type >&);
 
   share_t (const ::xercesc::DOMElement& e,
            ::xml_schema::flags f = 0,
@@ -429,7 +408,6 @@ class share_t: public ::xml_schema::type
   ::xsd::cxx::tree::one< name_type > name_;
   description_optional description_;
   ::xsd::cxx::tree::one< users_type > users_;
-  ::xsd::cxx::tree::one< files_type > files_;
 };
 
 class users_t: public ::xml_schema::type
@@ -487,7 +465,7 @@ class user_t: public ::xml_schema::type
   public:
   // name
   // 
-  typedef ::xml_schema::string name_type;
+  typedef ::xml_schema::name name_type;
   typedef ::xsd::cxx::tree::traits< name_type, char > name_traits;
 
   const name_type&
@@ -549,143 +527,6 @@ class user_t: public ::xml_schema::type
   protected:
   ::xsd::cxx::tree::one< name_type > name_;
   ::xsd::cxx::tree::one< password_type > password_;
-};
-
-class files_t: public ::xml_schema::type
-{
-  public:
-  // file
-  // 
-  typedef ::file_t file_type;
-  typedef ::xsd::cxx::tree::sequence< file_type > file_sequence;
-  typedef file_sequence::iterator file_iterator;
-  typedef file_sequence::const_iterator file_const_iterator;
-  typedef ::xsd::cxx::tree::traits< file_type, char > file_traits;
-
-  const file_sequence&
-  file () const;
-
-  file_sequence&
-  file ();
-
-  void
-  file (const file_sequence& s);
-
-  // Constructors.
-  //
-  files_t ();
-
-  files_t (const ::xercesc::DOMElement& e,
-           ::xml_schema::flags f = 0,
-           ::xml_schema::container* c = 0);
-
-  files_t (const files_t& x,
-           ::xml_schema::flags f = 0,
-           ::xml_schema::container* c = 0);
-
-  virtual files_t*
-  _clone (::xml_schema::flags f = 0,
-          ::xml_schema::container* c = 0) const;
-
-  virtual 
-  ~files_t ();
-
-  // Implementation.
-  //
-  protected:
-  void
-  parse (::xsd::cxx::xml::dom::parser< char >&,
-         ::xml_schema::flags);
-
-  protected:
-  file_sequence file_;
-};
-
-class file_t: public ::xml_schema::type
-{
-  public:
-  // description
-  // 
-  typedef ::xml_schema::string description_type;
-  typedef ::xsd::cxx::tree::sequence< description_type > description_sequence;
-  typedef description_sequence::iterator description_iterator;
-  typedef description_sequence::const_iterator description_const_iterator;
-  typedef ::xsd::cxx::tree::traits< description_type, char > description_traits;
-
-  const description_sequence&
-  description () const;
-
-  description_sequence&
-  description ();
-
-  void
-  description (const description_sequence& s);
-
-  // local
-  // 
-  typedef ::xml_schema::uri local_type;
-  typedef ::xsd::cxx::tree::traits< local_type, char > local_traits;
-
-  const local_type&
-  local () const;
-
-  local_type&
-  local ();
-
-  void
-  local (const local_type& x);
-
-  void
-  local (::std::auto_ptr< local_type > p);
-
-  // remote
-  // 
-  typedef ::xml_schema::uri remote_type;
-  typedef ::xsd::cxx::tree::traits< remote_type, char > remote_traits;
-
-  const remote_type&
-  remote () const;
-
-  remote_type&
-  remote ();
-
-  void
-  remote (const remote_type& x);
-
-  void
-  remote (::std::auto_ptr< remote_type > p);
-
-  // Constructors.
-  //
-  file_t (const local_type&,
-          const remote_type&);
-
-  file_t (const ::xercesc::DOMElement& e,
-          ::xml_schema::flags f = 0,
-          ::xml_schema::container* c = 0);
-
-  file_t (const file_t& x,
-          ::xml_schema::flags f = 0,
-          ::xml_schema::container* c = 0);
-
-  virtual file_t*
-  _clone (::xml_schema::flags f = 0,
-          ::xml_schema::container* c = 0) const;
-
-  virtual 
-  ~file_t ();
-
-  // Implementation.
-  //
-  protected:
-  void
-  parse (::xsd::cxx::xml::dom::parser< char >&,
-         ::xml_schema::flags);
-
-  protected:
-  description_sequence description_;
-  ::xsd::cxx::tree::one< local_type > local_;
-  ::xsd::cxx::tree::one< remote_type > remote_;
 };
 
 class FilePath: public ::xml_schema::string
@@ -912,12 +753,6 @@ operator<< (::xercesc::DOMElement&, const users_t&);
 
 void
 operator<< (::xercesc::DOMElement&, const user_t&);
-
-void
-operator<< (::xercesc::DOMElement&, const files_t&);
-
-void
-operator<< (::xercesc::DOMElement&, const file_t&);
 
 void
 operator<< (::xercesc::DOMElement&, const FilePath&);

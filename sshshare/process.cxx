@@ -223,18 +223,19 @@ void Process::join()
         status = status_last_wait;
     }
 
+    if (print_exit_details)
+    {
 
-
-    printf("WIFEXITED: %d\n", WIFEXITED(status));
-    printf("WEXITSTATUS: %d\n", WEXITSTATUS(status));
-    printf("WIFSIGNALED: %d\n", WIFSIGNALED(status));
-    printf("WCOREDUMP: %d\n", WCOREDUMP(status));
-    printf("WTERMSIG: %d\n", WTERMSIG(status));
-    printf("WCOREDUMP: %d\n", WCOREDUMP(status));
-    printf("WIFSTOPPED: %d\n", WIFSTOPPED(status));
-    printf("WSTOPSIG: %d\n", WSTOPSIG(status));
-    printf("WIFCONTINUED: %d\n", WIFCONTINUED(status));
-
+        printf("WIFEXITED: %d\n", WIFEXITED(status));
+        printf("WEXITSTATUS: %d\n", WEXITSTATUS(status));
+        printf("WIFSIGNALED: %d\n", WIFSIGNALED(status));
+        printf("WCOREDUMP: %d\n", WCOREDUMP(status));
+        printf("WTERMSIG: %d\n", WTERMSIG(status));
+        printf("WCOREDUMP: %d\n", WCOREDUMP(status));
+        printf("WIFSTOPPED: %d\n", WIFSTOPPED(status));
+        printf("WSTOPSIG: %d\n", WSTOPSIG(status));
+        printf("WIFCONTINUED: %d\n", WIFCONTINUED(status));
+    }
 
     if (status) onFail(status);
     else onSuccess();

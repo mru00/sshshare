@@ -14,10 +14,9 @@
 
     <xs:complexType name="share_t">
     <xs:sequence>
-    <xs:element name="name" type="xs:string" maxOccurs="1" minOccurs="1"/>
+    <xs:element name="name" type="xs:Name" maxOccurs="1" minOccurs="1"/>
     <xs:element name="description" type="xs:string" maxOccurs="1" minOccurs="0"/>
     <xs:element name="users" type="users_t" minOccurs="1" maxOccurs="1"/>
-    <xs:element name="files" type="files_t" maxOccurs="1" minOccurs="1"/>
   </xs:sequence></xs:complexType>
 
 
@@ -30,26 +29,12 @@
 
   <xs:complexType name="user_t">
   <xs:sequence>
-  <xs:element name="name" type="xs:string" maxOccurs="1" minOccurs="1"/>
+  <xs:element name="name" type="xs:Name" maxOccurs="1" minOccurs="1"/>
     <xs:element name="password" type="xs:string" maxOccurs="1" minOccurs="1"/>
   </xs:sequence>
   </xs:complexType>
 
 
-  <xs:complexType name="files_t">
-  <xs:sequence>
-  <xs:element name="file" maxOccurs="unbounded" minOccurs="0" type="file_t"/>
-  </xs:sequence></xs:complexType>
-
-
-
-  <xs:complexType name="file_t">
-    <xs:sequence>
-        <xs:element name="description" type="xs:string" maxOccurs="unbounded" minOccurs="0"/>
-        <xs:element name="local" type="xs:anyURI" maxOccurs="1" minOccurs="1"/>
-        <xs:element name="remote" type="xs:anyURI" maxOccurs="1" minOccurs="1"/>
-    </xs:sequence>
-  </xs:complexType>
 
 <xs:simpleType name="FilePath">
 <xs:restriction base="xs:string">

@@ -6,12 +6,11 @@
 #include "shares.hxx"
 #include "sshprocess.hxx"
 #include "echoprocess.hxx"
-
+#include "config.hxx"
 
 
 int main(int argc, char** argv)
 {
-
     {
         cout << endl << endl << endl << "sleep" << endl;
         vector<string> argv;
@@ -23,7 +22,7 @@ int main(int argc, char** argv)
 
     {
         cout << endl << endl << endl << "ssh" << endl;
-        SshProcess ssh;
+        SshProcess ssh(Config::makeUrl());
         ssh.run();
         ssh.write("echo hi there! 1");
         ssh.write("echo hi there! 8");
@@ -40,12 +39,12 @@ int main(int argc, char** argv)
     }
     {
         cout << endl << endl << endl << "scp test.txt" << endl;
-        ScpProcess scp("mru@sisyphus.teil.cc:test.txt", ".");
+        ScpProcess scp(Config::makePath("test.txt"), ".");
         scp.run();
     }
     {
         cout << endl << endl << endl << "scp gpx" << endl;
-        ScpProcess scp("/home/mru/test2.gpx", "mru@sisyphus.teil.cc:");
+        ScpProcess scp("/home/mru/test2.gpx", Config::makePath(""));
         scp.run();
     }
 

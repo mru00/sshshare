@@ -143,30 +143,6 @@ users (::std::auto_ptr< users_type > x)
   this->users_.set (x);
 }
 
-const share_t::files_type& share_t::
-files () const
-{
-  return this->files_.get ();
-}
-
-share_t::files_type& share_t::
-files ()
-{
-  return this->files_.get ();
-}
-
-void share_t::
-files (const files_type& x)
-{
-  this->files_.set (x);
-}
-
-void share_t::
-files (::std::auto_ptr< files_type > x)
-{
-  this->files_.set (x);
-}
-
 
 // users_t
 // 
@@ -239,98 +215,6 @@ void user_t::
 password (::std::auto_ptr< password_type > x)
 {
   this->password_.set (x);
-}
-
-
-// files_t
-// 
-
-const files_t::file_sequence& files_t::
-file () const
-{
-  return this->file_;
-}
-
-files_t::file_sequence& files_t::
-file ()
-{
-  return this->file_;
-}
-
-void files_t::
-file (const file_sequence& s)
-{
-  this->file_ = s;
-}
-
-
-// file_t
-// 
-
-const file_t::description_sequence& file_t::
-description () const
-{
-  return this->description_;
-}
-
-file_t::description_sequence& file_t::
-description ()
-{
-  return this->description_;
-}
-
-void file_t::
-description (const description_sequence& s)
-{
-  this->description_ = s;
-}
-
-const file_t::local_type& file_t::
-local () const
-{
-  return this->local_.get ();
-}
-
-file_t::local_type& file_t::
-local ()
-{
-  return this->local_.get ();
-}
-
-void file_t::
-local (const local_type& x)
-{
-  this->local_.set (x);
-}
-
-void file_t::
-local (::std::auto_ptr< local_type > x)
-{
-  this->local_.set (x);
-}
-
-const file_t::remote_type& file_t::
-remote () const
-{
-  return this->remote_.get ();
-}
-
-file_t::remote_type& file_t::
-remote ()
-{
-  return this->remote_.get ();
-}
-
-void file_t::
-remote (const remote_type& x)
-{
-  this->remote_.set (x);
-}
-
-void file_t::
-remote (::std::auto_ptr< remote_type > x)
-{
-  this->remote_.set (x);
 }
 
 
@@ -415,25 +299,21 @@ shares_t::
 
 share_t::
 share_t (const name_type& name,
-         const users_type& users,
-         const files_type& files)
+         const users_type& users)
 : ::xml_schema::type (),
   name_ (name, ::xml_schema::flags (), this),
   description_ (::xml_schema::flags (), this),
-  users_ (users, ::xml_schema::flags (), this),
-  files_ (files, ::xml_schema::flags (), this)
+  users_ (users, ::xml_schema::flags (), this)
 {
 }
 
 share_t::
 share_t (const name_type& name,
-         ::std::auto_ptr< users_type >& users,
-         ::std::auto_ptr< files_type >& files)
+         ::std::auto_ptr< users_type >& users)
 : ::xml_schema::type (),
   name_ (name, ::xml_schema::flags (), this),
   description_ (::xml_schema::flags (), this),
-  users_ (users, ::xml_schema::flags (), this),
-  files_ (files, ::xml_schema::flags (), this)
+  users_ (users, ::xml_schema::flags (), this)
 {
 }
 
@@ -444,8 +324,7 @@ share_t (const share_t& x,
 : ::xml_schema::type (x, f, c),
   name_ (x.name_, f, this),
   description_ (x.description_, f, this),
-  users_ (x.users_, f, this),
-  files_ (x.files_, f, this)
+  users_ (x.users_, f, this)
 {
 }
 
@@ -456,8 +335,7 @@ share_t (const ::xercesc::DOMElement& e,
 : ::xml_schema::type (e, f | ::xml_schema::flags::base, c),
   name_ (f, this),
   description_ (f, this),
-  users_ (f, this),
-  files_ (f, this)
+  users_ (f, this)
 {
   if ((f & ::xml_schema::flags::base) == 0)
   {
@@ -518,20 +396,6 @@ parse (::xsd::cxx::xml::dom::parser< char >& p,
       }
     }
 
-    // files
-    //
-    if (n.name () == "files" && n.namespace_ ().empty ())
-    {
-      ::std::auto_ptr< files_type > r (
-        files_traits::create (i, f, this));
-
-      if (!files_.present ())
-      {
-        this->files_.set (r);
-        continue;
-      }
-    }
-
     break;
   }
 
@@ -546,13 +410,6 @@ parse (::xsd::cxx::xml::dom::parser< char >& p,
   {
     throw ::xsd::cxx::tree::expected_element< char > (
       "users",
-      "");
-  }
-
-  if (!files_.present ())
-  {
-    throw ::xsd::cxx::tree::expected_element< char > (
-      "files",
       "");
   }
 }
@@ -741,195 +598,6 @@ _clone (::xml_schema::flags f,
 
 user_t::
 ~user_t ()
-{
-}
-
-// files_t
-//
-
-files_t::
-files_t ()
-: ::xml_schema::type (),
-  file_ (::xml_schema::flags (), this)
-{
-}
-
-files_t::
-files_t (const files_t& x,
-         ::xml_schema::flags f,
-         ::xml_schema::container* c)
-: ::xml_schema::type (x, f, c),
-  file_ (x.file_, f, this)
-{
-}
-
-files_t::
-files_t (const ::xercesc::DOMElement& e,
-         ::xml_schema::flags f,
-         ::xml_schema::container* c)
-: ::xml_schema::type (e, f | ::xml_schema::flags::base, c),
-  file_ (f, this)
-{
-  if ((f & ::xml_schema::flags::base) == 0)
-  {
-    ::xsd::cxx::xml::dom::parser< char > p (e, true, false);
-    this->parse (p, f);
-  }
-}
-
-void files_t::
-parse (::xsd::cxx::xml::dom::parser< char >& p,
-       ::xml_schema::flags f)
-{
-  for (; p.more_elements (); p.next_element ())
-  {
-    const ::xercesc::DOMElement& i (p.cur_element ());
-    const ::xsd::cxx::xml::qualified_name< char > n (
-      ::xsd::cxx::xml::dom::name< char > (i));
-
-    // file
-    //
-    if (n.name () == "file" && n.namespace_ ().empty ())
-    {
-      ::std::auto_ptr< file_type > r (
-        file_traits::create (i, f, this));
-
-      this->file_.push_back (r);
-      continue;
-    }
-
-    break;
-  }
-}
-
-files_t* files_t::
-_clone (::xml_schema::flags f,
-        ::xml_schema::container* c) const
-{
-  return new class files_t (*this, f, c);
-}
-
-files_t::
-~files_t ()
-{
-}
-
-// file_t
-//
-
-file_t::
-file_t (const local_type& local,
-        const remote_type& remote)
-: ::xml_schema::type (),
-  description_ (::xml_schema::flags (), this),
-  local_ (local, ::xml_schema::flags (), this),
-  remote_ (remote, ::xml_schema::flags (), this)
-{
-}
-
-file_t::
-file_t (const file_t& x,
-        ::xml_schema::flags f,
-        ::xml_schema::container* c)
-: ::xml_schema::type (x, f, c),
-  description_ (x.description_, f, this),
-  local_ (x.local_, f, this),
-  remote_ (x.remote_, f, this)
-{
-}
-
-file_t::
-file_t (const ::xercesc::DOMElement& e,
-        ::xml_schema::flags f,
-        ::xml_schema::container* c)
-: ::xml_schema::type (e, f | ::xml_schema::flags::base, c),
-  description_ (f, this),
-  local_ (f, this),
-  remote_ (f, this)
-{
-  if ((f & ::xml_schema::flags::base) == 0)
-  {
-    ::xsd::cxx::xml::dom::parser< char > p (e, true, false);
-    this->parse (p, f);
-  }
-}
-
-void file_t::
-parse (::xsd::cxx::xml::dom::parser< char >& p,
-       ::xml_schema::flags f)
-{
-  for (; p.more_elements (); p.next_element ())
-  {
-    const ::xercesc::DOMElement& i (p.cur_element ());
-    const ::xsd::cxx::xml::qualified_name< char > n (
-      ::xsd::cxx::xml::dom::name< char > (i));
-
-    // description
-    //
-    if (n.name () == "description" && n.namespace_ ().empty ())
-    {
-      ::std::auto_ptr< description_type > r (
-        description_traits::create (i, f, this));
-
-      this->description_.push_back (r);
-      continue;
-    }
-
-    // local
-    //
-    if (n.name () == "local" && n.namespace_ ().empty ())
-    {
-      ::std::auto_ptr< local_type > r (
-        local_traits::create (i, f, this));
-
-      if (!local_.present ())
-      {
-        this->local_.set (r);
-        continue;
-      }
-    }
-
-    // remote
-    //
-    if (n.name () == "remote" && n.namespace_ ().empty ())
-    {
-      ::std::auto_ptr< remote_type > r (
-        remote_traits::create (i, f, this));
-
-      if (!remote_.present ())
-      {
-        this->remote_.set (r);
-        continue;
-      }
-    }
-
-    break;
-  }
-
-  if (!local_.present ())
-  {
-    throw ::xsd::cxx::tree::expected_element< char > (
-      "local",
-      "");
-  }
-
-  if (!remote_.present ())
-  {
-    throw ::xsd::cxx::tree::expected_element< char > (
-      "remote",
-      "");
-  }
-}
-
-file_t* file_t::
-_clone (::xml_schema::flags f,
-        ::xml_schema::container* c) const
-{
-  return new class file_t (*this, f, c);
-}
-
-file_t::
-~file_t ()
 {
 }
 
@@ -1499,17 +1167,6 @@ operator<< (::xercesc::DOMElement& e, const share_t& i)
 
     s << i.users ();
   }
-
-  // files
-  //
-  {
-    ::xercesc::DOMElement& s (
-      ::xsd::cxx::xml::dom::create_element (
-        "files",
-        e));
-
-    s << i.files ();
-  }
 }
 
 void
@@ -1557,68 +1214,6 @@ operator<< (::xercesc::DOMElement& e, const user_t& i)
         e));
 
     s << i.password ();
-  }
-}
-
-void
-operator<< (::xercesc::DOMElement& e, const files_t& i)
-{
-  e << static_cast< const ::xml_schema::type& > (i);
-
-  // file
-  //
-  for (files_t::file_const_iterator
-       b (i.file ().begin ()), n (i.file ().end ());
-       b != n; ++b)
-  {
-    ::xercesc::DOMElement& s (
-      ::xsd::cxx::xml::dom::create_element (
-        "file",
-        e));
-
-    s << *b;
-  }
-}
-
-void
-operator<< (::xercesc::DOMElement& e, const file_t& i)
-{
-  e << static_cast< const ::xml_schema::type& > (i);
-
-  // description
-  //
-  for (file_t::description_const_iterator
-       b (i.description ().begin ()), n (i.description ().end ());
-       b != n; ++b)
-  {
-    ::xercesc::DOMElement& s (
-      ::xsd::cxx::xml::dom::create_element (
-        "description",
-        e));
-
-    s << *b;
-  }
-
-  // local
-  //
-  {
-    ::xercesc::DOMElement& s (
-      ::xsd::cxx::xml::dom::create_element (
-        "local",
-        e));
-
-    s << i.local ();
-  }
-
-  // remote
-  //
-  {
-    ::xercesc::DOMElement& s (
-      ::xsd::cxx::xml::dom::create_element (
-        "remote",
-        e));
-
-    s << i.remote ();
   }
 }
 

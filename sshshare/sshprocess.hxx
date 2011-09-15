@@ -9,8 +9,10 @@
 
 class SshProcess : Process
 {
+    const std::string url;
+
 public:
-    SshProcess();
+    SshProcess(const std::string& url);
     virtual ~SshProcess();
 
     void write(const std::string& line);

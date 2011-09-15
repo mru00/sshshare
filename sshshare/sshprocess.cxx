@@ -7,8 +7,9 @@
 
 using namespace std;
 
-SshProcess::SshProcess()
+SshProcess::SshProcess(const std::string& url)
 :Process(true, false)
+, url(url)
 {
     //ctor
 }
@@ -20,9 +21,7 @@ SshProcess::~SshProcess()
 
 void SshProcess::join()
 {
-
     Process::join();
-
 }
 
 void SshProcess::write(const string& line)
@@ -36,19 +35,9 @@ void SshProcess::write(const string& line)
 
 void SshProcess::run()
 {
-
-#if 1
     vector<string> argv;
     argv.push_back("/usr/bin/ssh");
     argv.push_back(Config::makeUrl());
-    //argv.push_back("-T");
-#else
-    vector<string> argv;
-    //argv.push_back("/home/mru/dev/06multimedia/sshshare/test_piper/bin/Debug/test_piper");
-    argv.push_back("/usr/bin/tee");
-    argv.push_back("/home/mru/teetest");
 
-#endif
     Process::start(argv[0], argv);
-
 }

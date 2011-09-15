@@ -6,6 +6,8 @@
 
 class Process
 {
+    const static bool print_exit_details = false;
+
     public:
         Process(bool ro = true, bool re = false);
         virtual ~Process();

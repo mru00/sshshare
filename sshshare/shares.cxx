@@ -13,6 +13,11 @@ using namespace std;
 
 void create_share(string name, const users_t& users) {
 
+    if (users.user().size() == 0) {
+        printf("no users specified!");
+        return;
+    }
+
     string htpasswd("/home/mru/shares/htpasswd."+name);
     string htaccess("public_html/shares/"+name+"/.htaccess");
 
@@ -31,7 +36,7 @@ void create_share(string name, const users_t& users) {
 
     ofstream script("test.sh");
     script << "#! /bin/bash -xe" << endl;
-    script << "mkdir -p ~/public_html/shares/" << name << endl;
+    script << "mkdir -p ~/public_html/shares/" << name << "" << endl;
     script << "mkdir -p ~/shares" << endl;
 
     int i = 0;
@@ -47,11 +52,13 @@ void create_share(string name, const users_t& users) {
     ScpProcess scp("test.sh", Config::makePath("create_share.sh"));
     scp.run();
 
-    ScpProcess scp1("htaccess", Config::makePath(htaccess));
-    scp1.run();
 
-    SshProcess ssh;
+    SshProcess ssh(Config::makeUrl());
     ssh.run();
     ssh.write("sh create_share.sh");
     ssh.join();
+
+    ScpProcess scp1("htaccess", Config::makePath(htaccess));
+    scp1.run();
+
 }
