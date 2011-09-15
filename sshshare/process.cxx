@@ -1,3 +1,4 @@
+#include <cstring>
 #include <pty.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -46,7 +47,7 @@ int Process::start(const string& binary, const vector<string>& argv)
     {
         perror("pipe failed!");
         onFail(errno);
-        return errno;
+        throw ProcessException(StatusCode(errno), strerror(errno));
     }
 
     if (usepty)
@@ -61,7 +62,7 @@ int Process::start(const string& binary, const vector<string>& argv)
         {
             perror("pipe pfd_out failed!");
             onFail(errno);
-            return errno;
+        throw ProcessException(StatusCode(errno), strerror(errno));
         }
     }
 
@@ -71,8 +72,7 @@ int Process::start(const string& binary, const vector<string>& argv)
     {
         onStateChange();
         onFail(errno);
-        perror("forkpty");
-        return errno;
+        throw ProcessException(StatusCode(errno), strerror(errno));
     }
 
     // CHILD?
@@ -244,7 +244,10 @@ void Process::join()
         printf("WIFCONTINUED: %d\n", WIFCONTINUED(status));
     }
 
-    if (status) onFail(status);
+    if (status) {
+        onFail(status);
+        throw ProcessException(status, "Process returned with unsuccessful exit code.");
+    }
     else onSuccess();
 
     pid = 0;

@@ -47,3 +47,9 @@ Development
  * libxerces
 
  * xsdcxx http://www.codesynthesis.com/projects/xsd/documentation/cxx/tree/guide/
+
+
+The files sshshare.hxx and sshshare.cxx are generated with the xsdcxx tool. The tool can be started with the
+`makexsd.sh` command.
+
+    sudo apt-get install xsdcxx libxerces-c-dev

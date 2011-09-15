@@ -14,6 +14,9 @@ using namespace std;
 auto_ptr<shares_t> shares_ptr;
 GtkListStore* list_store_users, *list_store_shares;
 GtkWidget* list_view_users, *list_view_shares, *label_href, *label_sftp;
+GtkTextBuffer* text_template_buffer;
+GtkWidget* dialog_comm;
+
 
 static void populate_shares_list(GtkListStore* store, auto_ptr<shares_t>& shares);
 static void populate_users_list(GtkListStore* store, users_t& users);
@@ -22,6 +25,52 @@ static void set_label_href(const string& share)
 {
     gtk_label_set_markup (GTK_LABEL(label_href), string("<a href=\"" + Config::makeHttpUrl(share) + "\">"+Config::makeHttpUrl(share)+"</a>").c_str());
     gtk_label_set_markup (GTK_LABEL(label_sftp), string("<a href=\"" + Config::makeSftpUrl(share) + "\">"+Config::makeSftpUrl(share)+"</a>").c_str());
+}
+
+static void update_template_buffer()
+{
+    string share_name;
+    string user_name;
+    string password;
+
+    GtkTreeSelection *selection;
+    GtkTreeModel     *model;
+    int index;
+    GtkTreeIter i1;
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(list_view_shares));
+    if (gtk_tree_selection_get_selected (selection, &model, &i1))
+    {
+        gtk_tree_model_get (model, &i1, 0, &index, -1);
+        share_t& share = shares_ptr->share()[index];
+
+
+        GtkTreeIter i2;
+        selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(list_view_users));
+        if (gtk_tree_selection_get_selected (selection, &model, &i2))
+        {
+            gtk_tree_model_get (model, &i2, 0, &index, -1);
+
+            user_t& user = share.users().user()[index];
+
+            share_name = share.name();
+
+            string template_text;
+            template_text += Config::makeHttpUrl(share.name()) + "\n";
+            template_text += "\n";
+            template_text += "username: " + user.name() + "\n";
+            template_text += "password: " + user.password() + "\n";
+
+            gtk_text_buffer_set_text(text_template_buffer, template_text.c_str(), -1);
+        }
+        else
+        {
+            gtk_text_buffer_set_text(text_template_buffer, "", -1);
+        }
+    }
+    else
+    {
+        gtk_text_buffer_set_text(text_template_buffer, "", -1);
+    }
 }
 
 static void dialog_warn(GtkWidget* win, const string& message)
@@ -139,7 +188,11 @@ static void cb_apply (GtkWidget *wid, GtkWidget *win)
         }
         else
         {
+            try{
             create_share(name, share.users());
+            }catch (ProcessException& e) {
+                dialog_warn(win,e.what());
+            }
         }
         g_free(name);
     }
@@ -208,8 +261,20 @@ static void share_selection_changed_cb (GtkTreeSelection *selection, gpointer da
             set_label_href(name);
         }
 
+        update_template_buffer();
 
         g_free(name);
+    }
+}
+
+static void user_selection_changed_cb (GtkTreeSelection *selection, gpointer data)
+{
+    GtkTreeIter iter;
+    GtkTreeModel *model;
+
+    if (gtk_tree_selection_get_selected (selection, &model, &iter))
+    {
+        update_template_buffer();
     }
 }
 
@@ -324,6 +389,8 @@ static GtkWidget* create_users_box(GtkWidget* win)
     column = gtk_tree_view_column_new_with_attributes("password", renderer, "text", 2, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
 
+    setup_selection(GTK_TREE_VIEW(list), G_CALLBACK(user_selection_changed_cb));
+
     list_store_users = store;
     list_view_users = list;
 
@@ -359,10 +426,17 @@ static GtkWidget* create_right_box(GtkWidget* win)
 
     label_href = gtk_label_new("");
     label_sftp = gtk_label_new("");
-    set_label_href("");
+
     gtk_box_pack_start(GTK_BOX(vbox), label_href, FALSE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), label_sftp, FALSE, TRUE, 0);
+    text_template_buffer = gtk_text_buffer_new(NULL);
 
+    GtkWidget* text_template = gtk_text_view_new_with_buffer(text_template_buffer);
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(text_template), FALSE);
+    gtk_box_pack_start(GTK_BOX(vbox), text_template, FALSE, TRUE, 0);
+
+
+    set_label_href("");
     return vbox;
 }
 
@@ -394,6 +468,14 @@ static GtkWidget* create_ui()
     return win;
 }
 
+static void create_dialog_comm()
+{
+
+    dialog_comm = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_INFO,GTK_BUTTONS_NONE,
+                                         "%s", "Communicating with server");
+
+}
+
 int main (int argc, char *argv[])
 {
 
@@ -402,19 +484,35 @@ int main (int argc, char *argv[])
     gtk_init (&argc, &argv);
     g_log_set_handler ("Gtk", G_LOG_LEVEL_WARNING, g_log_default_handler, NULL);
 
+    create_dialog_comm();
 
-    ScpProcess(Config::makePath("shares/" + Config::xmlfilename), ".").run();
 
     try
     {
-        shares_ptr = shares(Config::xmlfilename);
+        gtk_widget_show_all(dialog_comm);
+        ScpProcess(Config::makePath("shares/" + Config::xmlfilename), ".").run();
+        gtk_widget_hide(dialog_comm);
+
+
+        try
+        {
+
+            shares_ptr = shares(Config::xmlfilename);
+        }
+        catch (xml_schema::parsing ex)
+        {
+            dialog_warn(NULL, "failed to load file, starting a fresh one");
+            printf ("failed to load file, starting a fresh one.");
+            shares_ptr.reset(new shares_t());
+        }
     }
-    catch (xml_schema::parsing ex)
+    catch (ProcessException& e)
     {
-        dialog_warn(NULL, "failed to load file, starting a fresh one");
-        printf ("failed to load file, starting a fresh one.");
-        shares_ptr.reset(new shares_t());
+        dialog_warn(NULL, "Failed to communicate with server. Please check console output.");
+        gtk_widget_hide(dialog_comm);
+        return 1;
     }
+
 
     GtkWidget *win = create_ui();
     populate_shares_list(list_store_shares, shares_ptr);
@@ -433,7 +531,17 @@ int main (int argc, char *argv[])
     std::ofstream ofs (Config::xmlfilename.c_str());
     shares (ofs, *shares_ptr, map);
 
-    ScpProcess("sharedata.xml", Config::makePath("shares/sharedata.xml")).run();
+    try
+    {
+        gtk_widget_show_all(dialog_comm);
+        ScpProcess("sharedata.xml", Config::makePath("shares/sharedata.xml")).run();
+    }
+    catch (ProcessException& e)
+    {
+        dialog_warn(NULL, "Failed to communicate with server. Please check console output.");
+    }
+    gtk_widget_hide(dialog_comm);
 
     return 0;
 }
+

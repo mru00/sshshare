@@ -11,9 +11,10 @@
 
 using namespace std;
 
-void create_share(string name, const users_t& users) {
-
-    if (users.user().size() == 0) {
+void create_share(string name, const users_t& users)
+{
+    if (users.user().size() == 0)
+    {
         printf("no users specified!");
         return;
     }
@@ -49,16 +50,24 @@ void create_share(string name, const users_t& users) {
 
     script.close();
 
-    ScpProcess scp("test.sh", Config::makePath("create_share.sh"));
-    scp.run();
+
+    try
+    {
+        ScpProcess scp("test.sh", Config::makePath("create_share.sh"));
+        scp.run();
 
 
-    SshProcess ssh(Config::makeUrl());
-    ssh.run();
-    ssh.write("sh create_share.sh");
-    ssh.join();
+        SshProcess ssh(Config::makeUrl());
+        ssh.run();
+        ssh.write("sh create_share.sh");
+        ssh.join();
 
-    ScpProcess scp1("htaccess", Config::makePath(htaccess));
-    scp1.run();
-
+        ScpProcess scp1("htaccess", Config::makePath(htaccess));
+        scp1.run();
+    }
+    catch (ProcessException& e)
+    {
+        printf ("error in communication, %s\n", e.what());
+        throw;
+    }
 }

@@ -5,21 +5,64 @@
 
 #include <string>
 #include <vector>
+#include <exception>
+
 
 
 class StatusCode
 {
 public:
     int status;
+    StatusCode(int c) : status(c) {}
 
-    bool isExited() { return WIFEXITED(status); }
-    int exitStatus() { return WEXITSTATUS(status); }
-    bool isSignaled() { return WIFSIGNALED(status); }
-    bool hasCoreDump() { return WCOREDUMP(status); }
-    bool isTermSig() { return WTERMSIG(status); }
-    bool isStopped() { return WIFSTOPPED(status); }
-    int stopSig() {  return WSTOPSIG(status); }
-    bool isContinued() { return WIFCONTINUED(status); }
+    bool isExited()
+    {
+        return WIFEXITED(status);
+    }
+    int exitStatus()
+    {
+        return WEXITSTATUS(status);
+    }
+    bool isSignaled()
+    {
+        return WIFSIGNALED(status);
+    }
+    bool hasCoreDump()
+    {
+        return WCOREDUMP(status);
+    }
+    bool isTermSig()
+    {
+        return WTERMSIG(status);
+    }
+    bool isStopped()
+    {
+        return WIFSTOPPED(status);
+    }
+    int stopSig()
+    {
+        return WSTOPSIG(status);
+    }
+    bool isContinued()
+    {
+        return WIFCONTINUED(status);
+    }
+};
+
+class ProcessException : public std::exception
+{
+public:
+    StatusCode status;
+    std::string description;
+
+
+    ProcessException(StatusCode s, const std::string& description)
+        : status(s)
+        , description(description)
+    {}
+
+    virtual ~ProcessException() throw() {};
+    virtual const char* what() { return description.c_str(); }
 };
 
 
