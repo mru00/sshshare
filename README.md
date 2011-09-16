@@ -19,6 +19,7 @@ The current implementation is very simple; error checking is almost not availabl
 
 For ssh communications, it is assumed that you use public key authentication, because no passwords can be entered.
 
+The schema definitions (*.xsd) are downloaded from a hardcoded address when the xml files are loaded.
 
 Screenshots
 -----------
@@ -47,6 +48,8 @@ Development
  * libxerces
 
  * xsdcxx http://www.codesynthesis.com/projects/xsd/documentation/cxx/tree/guide/
+
+ * boost::filesystem
 
 
 The files sshshare.hxx and sshshare.cxx are generated with the xsdcxx tool. The tool can be started with the

@@ -1,11 +1,11 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
+#include <sstream>
+
 #include <sys/wait.h>
 
-#include <string>
-#include <vector>
-#include <exception>
+
 
 
 
@@ -31,7 +31,7 @@ public:
     {
         return WCOREDUMP(status);
     }
-    bool isTermSig()
+    bool termSig()
     {
         return WTERMSIG(status);
     }
@@ -46,6 +46,17 @@ public:
     bool isContinued()
     {
         return WIFCONTINUED(status);
+    }
+
+    std::string describe() {
+        std::stringstream ss;
+        ss << "code: " << status << std::endl;
+        ss << "isExited: " << isExited() << std::endl;
+        ss << "exitStatus: " << exitStatus() << std::endl;
+        ss << "isSignaled: " << isSignaled() << std::endl;
+        ss << "signal: " << termSig() << std::endl;
+        ss << "hasCoreDump: " << hasCoreDump() << std::endl;
+        return ss.str();
     }
 };
 
@@ -62,7 +73,7 @@ public:
     {}
 
     virtual ~ProcessException() throw() {};
-    virtual const char* what() { return description.c_str(); }
+    virtual const char* what() { return (description + "\n" + status.describe()).c_str(); }
 };
 
 
@@ -71,32 +82,40 @@ class Process
     const static bool print_exit_details = false;
 
 public:
-    Process(bool ro = true, bool re = false);
+    Process(bool ro = true, bool re = false, bool pty=false);
     virtual ~Process();
 
     virtual void onStateChange() = 0;
     virtual void onSuccess() = 0;
     virtual void onFail(int code) = 0;
 
-    virtual int start(const std::string& binary, const std::vector<std::string>& argv);
+    virtual void start(const std::string& binary, const std::vector<std::string>& argv);
 
     FILE* p_in;
     FILE* p_out;
     FILE* p_err;
 
     virtual void join();
-    bool isAlive();
+    virtual bool isAlive();
 
 
-    bool fd_is_open(FILE* fd);
-    bool can_read_from_fd(FILE* fd);
+    virtual bool fd_is_open(FILE* fd);
+    virtual bool can_read_from_fd(FILE* fd);
+
+private:
+
+    void start_with_pty(const char* program, char* argv[]);
+    void start_without_pty(const char* program, char* argv[]);
 
 protected:
 private:
     int pid;
+
     int status_last_wait;
     bool redirect_stdout;
     bool redirect_stderr;
+    bool running;
+    bool use_pty;
 };
 
 

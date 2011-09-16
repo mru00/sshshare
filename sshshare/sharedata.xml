@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<shares xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="sshshare.xsd">
+<shares xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sisyphus.teil.cc/~mru/sshshare.xsd">
 
   <share>
     <name>firstshare</name>
@@ -27,12 +27,154 @@
 
   <share>
     <name>a24</name>
-    <users/>
+    <users>
+      <user>
+        <name>user0</name>
+        <password>ffacbim4</password>
+      </user>
+      <user>
+        <name>user1</name>
+        <password>E9wlIhz7</password>
+      </user>
+      <user>
+        <name>user2</name>
+        <password>jLyVECab</password>
+      </user>
+      <user>
+        <name>user3</name>
+        <password>uOvdagN2</password>
+      </user>
+    </users>
   </share>
 
   <share>
     <name>a543</name>
-    <users/>
+    <users>
+      <user>
+        <name>name</name>
+        <password>HGddsZKy</password>
+      </user>
+      <user>
+        <name>user</name>
+        <password>HGddsZKy</password>
+      </user>
+      <user>
+        <name>user</name>
+        <password>GoN28yM4</password>
+      </user>
+      <user>
+        <name>user0</name>
+        <password>HGddsZKy</password>
+      </user>
+      <user>
+        <name>user1</name>
+        <password>PHGoN28y</password>
+      </user>
+      <user>
+        <name>user2</name>
+        <password>Ups6O2IN</password>
+      </user>
+      <user>
+        <name>user3</name>
+        <password>LB3vG2J0</password>
+      </user>
+      <user>
+        <name>user4</name>
+        <password>g3P4DxIi</password>
+      </user>
+      <user>
+        <name>user5</name>
+        <password>2WDST5fd</password>
+      </user>
+      <user>
+        <name>user6</name>
+        <password>NWYQffac</password>
+      </user>
+      <user>
+        <name>user7</name>
+        <password>m4Oc5gE9</password>
+      </user>
+      <user>
+        <name>user8</name>
+        <password>hz7anLjL</password>
+      </user>
+      <user>
+        <name>user9</name>
+        <password>CabirqeI</password>
+      </user>
+      <user>
+        <name>user10</name>
+        <password>agN2jrMg</password>
+      </user>
+      <user>
+        <name>user11</name>
+        <password>cpVK5aUl</password>
+      </user>
+      <user>
+        <name>user12</name>
+        <password>fLyjhXFG</password>
+      </user>
+      <user>
+        <name>user13</name>
+        <password>NsM1GxVp</password>
+      </user>
+      <user>
+        <name>user14</name>
+        <password>GT1c2Nvu</password>
+      </user>
+      <user>
+        <name>user15</name>
+        <password>mJOsJZ16</password>
+      </user>
+      <user>
+        <name>user16</name>
+        <password>M3UWnIGi</password>
+      </user>
+      <user>
+        <name>user17</name>
+        <password>HGddsZKy</password>
+      </user>
+      <user>
+        <name>user18</name>
+        <password>3PHGoN28</password>
+      </user>
+      <user>
+        <name>user19</name>
+        <password>lUps6O2I</password>
+      </user>
+      <user>
+        <name>user20</name>
+        <password>DLB3vG2J</password>
+      </user>
+      <user>
+        <name>user21</name>
+        <password>HGddsZKy</password>
+      </user>
+      <user>
+        <name>user22</name>
+        <password>N28yM4Nw</password>
+      </user>
+      <user>
+        <name>user23</name>
+        <password>HGddsZKy</password>
+      </user>
+      <user>
+        <name>user24</name>
+        <password>N28yM4Nw</password>
+      </user>
+      <user>
+        <name>user25</name>
+        <password>HGddsZKy</password>
+      </user>
+      <user>
+        <name>user26</name>
+        <password>N28yM4Nw</password>
+      </user>
+      <user>
+        <name>user27</name>
+        <password>O2INpTHD</password>
+      </user>
+    </users>
   </share>
 
   <share>
@@ -51,6 +193,44 @@
       <user>
         <name>name</name>
         <password>password</password>
+      </user>
+    </users>
+  </share>
+
+  <share>
+    <name>t1</name>
+    <users>
+      <user>
+        <name>user0</name>
+        <password>DxIiijLQ</password>
+      </user>
+      <user>
+        <name>user1</name>
+        <password>J0lg3P4D</password>
+      </user>
+    </users>
+  </share>
+
+  <share>
+    <name>t2</name>
+    <users>
+      <user>
+        <name>user0</name>
+        <password>ST5fduep</password>
+      </user>
+      <user>
+        <name>user1</name>
+        <password>ST5fduep</password>
+      </user>
+    </users>
+  </share>
+
+  <share>
+    <name>t3</name>
+    <users>
+      <user>
+        <name>user0</name>
+        <password>ffacbim4</password>
       </user>
     </users>
   </share>

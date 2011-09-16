@@ -251,7 +251,6 @@ class shares_t;
 class share_t;
 class users_t;
 class user_t;
-class FilePath;
 
 #include <memory>    // std::auto_ptr
 #include <limits>    // std::numeric_limits
@@ -480,6 +479,9 @@ class user_t: public ::xml_schema::type
   void
   name (::std::auto_ptr< name_type > p);
 
+  static const name_type&
+  name_default_value ();
+
   // password
   // 
   typedef ::xml_schema::string password_type;
@@ -496,6 +498,9 @@ class user_t: public ::xml_schema::type
 
   void
   password (::std::auto_ptr< password_type > p);
+
+  static const password_type&
+  password_default_value ();
 
   // Constructors.
   //
@@ -526,45 +531,9 @@ class user_t: public ::xml_schema::type
 
   protected:
   ::xsd::cxx::tree::one< name_type > name_;
+  static const name_type name_default_value_;
   ::xsd::cxx::tree::one< password_type > password_;
-};
-
-class FilePath: public ::xml_schema::string
-{
-  public:
-  // Constructors.
-  //
-  FilePath ();
-
-  FilePath (const char*);
-
-  FilePath (const ::std::string&);
-
-  FilePath (const ::xml_schema::string&);
-
-  FilePath (const ::xercesc::DOMElement& e,
-            ::xml_schema::flags f = 0,
-            ::xml_schema::container* c = 0);
-
-  FilePath (const ::xercesc::DOMAttr& a,
-            ::xml_schema::flags f = 0,
-            ::xml_schema::container* c = 0);
-
-  FilePath (const ::std::string& s,
-            const ::xercesc::DOMElement* e,
-            ::xml_schema::flags f = 0,
-            ::xml_schema::container* c = 0);
-
-  FilePath (const FilePath& x,
-            ::xml_schema::flags f = 0,
-            ::xml_schema::container* c = 0);
-
-  virtual FilePath*
-  _clone (::xml_schema::flags f = 0,
-          ::xml_schema::container* c = 0) const;
-
-  virtual 
-  ~FilePath ();
+  static const password_type password_default_value_;
 };
 
 #include <iosfwd>
@@ -753,16 +722,6 @@ operator<< (::xercesc::DOMElement&, const users_t&);
 
 void
 operator<< (::xercesc::DOMElement&, const user_t&);
-
-void
-operator<< (::xercesc::DOMElement&, const FilePath&);
-
-void
-operator<< (::xercesc::DOMAttr&, const FilePath&);
-
-void
-operator<< (::xml_schema::list_stream&,
-            const FilePath&);
 
 #include <xsd/cxx/post.hxx>
 

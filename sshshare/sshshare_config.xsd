@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+    <xs:annotation>
+        <xs:appinfo>sshshare config schema</xs:appinfo>
+        <xs:documentation xml:lang="en">
+            Configuration schema for sshshare maintained share management of ~/public_html, htaccess and htpasswd.
+
+            See also: https://github.com/mru00/sshshare
+        </xs:documentation>
+    </xs:annotation>
+
+    <xs:element name="configuration" type="config_t"/>
+
+    <xs:complexType name="config_t">
+        <xs:sequence>
+            <xs:element name="username" type="xs:Name" default="user" maxOccurs="1" minOccurs="1" />
+            <xs:element name="server" type="xs:string" default="www.example.com" maxOccurs="1" minOccurs="1" />
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>

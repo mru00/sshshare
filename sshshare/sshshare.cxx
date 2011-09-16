@@ -193,6 +193,12 @@ name (::std::auto_ptr< name_type > x)
   this->name_.set (x);
 }
 
+const user_t::name_type& user_t::
+name_default_value ()
+{
+  return name_default_value_;
+}
+
 const user_t::password_type& user_t::
 password () const
 {
@@ -217,9 +223,11 @@ password (::std::auto_ptr< password_type > x)
   this->password_.set (x);
 }
 
-
-// FilePath
-// 
+const user_t::password_type& user_t::
+password_default_value ()
+{
+  return password_default_value_;
+}
 
 
 #include <xsd/cxx/xml/dom/parsing-source.hxx>
@@ -499,6 +507,12 @@ users_t::
 // user_t
 //
 
+const user_t::name_type user_t::name_default_value_ (
+  "user");
+
+const user_t::password_type user_t::password_default_value_ (
+  "password");
+
 user_t::
 user_t (const name_type& name,
         const password_type& password)
@@ -598,78 +612,6 @@ _clone (::xml_schema::flags f,
 
 user_t::
 ~user_t ()
-{
-}
-
-// FilePath
-//
-
-FilePath::
-FilePath ()
-: ::xml_schema::string ()
-{
-}
-
-FilePath::
-FilePath (const char* _xsd_string_base)
-: ::xml_schema::string (_xsd_string_base)
-{
-}
-
-FilePath::
-FilePath (const ::std::string& _xsd_string_base)
-: ::xml_schema::string (_xsd_string_base)
-{
-}
-
-FilePath::
-FilePath (const ::xml_schema::string& _xsd_string_base)
-: ::xml_schema::string (_xsd_string_base)
-{
-}
-
-FilePath::
-FilePath (const FilePath& x,
-          ::xml_schema::flags f,
-          ::xml_schema::container* c)
-: ::xml_schema::string (x, f, c)
-{
-}
-
-FilePath::
-FilePath (const ::xercesc::DOMElement& e,
-          ::xml_schema::flags f,
-          ::xml_schema::container* c)
-: ::xml_schema::string (e, f, c)
-{
-}
-
-FilePath::
-FilePath (const ::xercesc::DOMAttr& a,
-          ::xml_schema::flags f,
-          ::xml_schema::container* c)
-: ::xml_schema::string (a, f, c)
-{
-}
-
-FilePath::
-FilePath (const ::std::string& s,
-          const ::xercesc::DOMElement* e,
-          ::xml_schema::flags f,
-          ::xml_schema::container* c)
-: ::xml_schema::string (s, e, f, c)
-{
-}
-
-FilePath* FilePath::
-_clone (::xml_schema::flags f,
-        ::xml_schema::container* c) const
-{
-  return new class FilePath (*this, f, c);
-}
-
-FilePath::
-~FilePath ()
 {
 }
 
@@ -1215,25 +1157,6 @@ operator<< (::xercesc::DOMElement& e, const user_t& i)
 
     s << i.password ();
   }
-}
-
-void
-operator<< (::xercesc::DOMElement& e, const FilePath& i)
-{
-  e << static_cast< const ::xml_schema::string& > (i);
-}
-
-void
-operator<< (::xercesc::DOMAttr& a, const FilePath& i)
-{
-  a << static_cast< const ::xml_schema::string& > (i);
-}
-
-void
-operator<< (::xml_schema::list_stream& l,
-            const FilePath& i)
-{
-  l << static_cast< const ::xml_schema::string& > (i);
 }
 
 #include <xsd/cxx/post.hxx>

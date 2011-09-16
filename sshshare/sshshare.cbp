@@ -12,11 +12,10 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
+					<Add option="-Wextra" />
+					<Add option="-Wall" />
 					<Add option="-g" />
 				</Compiler>
-				<ExtraCommands>
-					<Add after="cp sshshare.xsd bin/Debug" />
-				</ExtraCommands>
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/sshshare" prefix_auto="1" extension_auto="1" />
@@ -29,9 +28,6 @@
 				<Linker>
 					<Add option="-s" />
 				</Linker>
-				<ExtraCommands>
-					<Add after="cp sshshare.xsd bin/Release" />
-				</ExtraCommands>
 			</Target>
 		</Build>
 		<Compiler>
@@ -41,6 +37,7 @@
 		<Linker>
 			<Add option="`pkg-config gtk+-2.0 --libs` -lxerces-c" />
 			<Add option="-lutil" />
+			<Add option="-lboost_filesystem -lboost_system" />
 		</Linker>
 		<Unit filename="../.gitignore" />
 		<Unit filename="../README.md" />
@@ -51,6 +48,8 @@
 		<Unit filename="linewiseprocess.cxx" />
 		<Unit filename="linewiseprocess.hxx" />
 		<Unit filename="main.cxx" />
+		<Unit filename="password.cxx" />
+		<Unit filename="password.hxx" />
 		<Unit filename="process.cxx" />
 		<Unit filename="process.hxx" />
 		<Unit filename="sampleshare.xml" />
@@ -63,6 +62,9 @@
 		<Unit filename="sshshare.cxx" />
 		<Unit filename="sshshare.hxx" />
 		<Unit filename="sshshare.xsd" />
+		<Unit filename="sshshare_config.cxx" />
+		<Unit filename="sshshare_config.hxx" />
+		<Unit filename="sshshare_config.xsd" />
 		<Unit filename="test_main.cxx">
 			<Option link="0" />
 		</Unit>

@@ -1,9 +1,8 @@
 #ifndef SSHPROCESS_H
 #define SSHPROCESS_H
 
-#include <stdio.h>
 
-#include <string>
+
 
 #include "process.hxx"
 
@@ -15,24 +14,34 @@ public:
     SshProcess(const std::string& url);
     virtual ~SshProcess();
 
-    void write(const std::string& line);
-    void run();
-    void join();
+    virtual void run(const std::vector<std::string>& additional_arguments = std::vector<std::string>());
+
+    virtual void write(const std::string& line);
+    virtual void join();
 
     virtual void onStateChange()
     {
-        printf("onstatechange\n");
+        std::cout << "onstatechange" << std::endl;
     }
     virtual void onSuccess()
     {
-        printf("success!\n");
+        std::cout << "success" << std::endl;
     }
     virtual void onFail(int code)
     {
-        printf("fail [%d]!\n", code);
+        std::cout << "fail [" << code << "]" << std::endl;
     }
+
+    void dump_buffers();
+
+    //SshProcess& operator << (const char*);
 protected:
 private:
 };
+
+
+SshProcess& operator << (SshProcess&, const char*);
+SshProcess& operator << (SshProcess&, const std::string&);
+
 
 #endif // SSHPROCESS_H

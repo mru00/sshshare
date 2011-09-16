@@ -18,28 +18,25 @@ public:
     {
         std::cout << "stdout: " << line << std::endl;
     }
-
-
     virtual void onStderr(const std::string& line)
     {
         std::cout << "stderr: " << line << std::endl;
     }
     virtual void onStateChange()
     {
-        printf("onstatechange\n");
+        std::cout << "onstatechange" << std::endl;
     }
     virtual void onSuccess()
     {
-        printf("success!\n");
+        std::cout << "success!" << std::endl;
     }
     virtual void onFail(int code)
     {
-        printf("fail [%d]!\n", code);
+        std::cout << "fail [" << code << "]" << std::endl;
     }
-
     virtual void onProgress(int progress)
     {
-        printf("progress: %d\n", progress);
+        std::cout << "progress: "<< progress << std::endl;
     }
 protected:
 private:

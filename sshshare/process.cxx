@@ -1,4 +1,5 @@
 #include <cstring>
+#include <iostream>
 #include <pty.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -11,7 +12,7 @@
 
 #include <string>
 #include <vector>
-
+#include <exception>
 
 
 #include "process.hxx"
@@ -19,167 +20,280 @@
 using namespace std;
 
 
-Process::Process(bool ro, bool re)
+Process::Process(bool ro, bool re, bool pty)
     : redirect_stdout(ro)
     , redirect_stderr(re)
+    , use_pty(pty)
+    , running(false)
 {
-    //ctor
 }
 
 Process::~Process()
 {
-    //dtor
 }
 
-
-
-int Process::start(const string& binary, const vector<string>& argv)
+void Process::start_with_pty(const char* program, char* argv[])
 {
-
-    int pfd[2];
-    int pfd_out[2];
-    const int usepty = 1;
-
+    int pfd_in[2];
+    int pfd_err[2];
+    int fd_out;
+    int parent_stderr = -1;
 
     onStateChange();
 
-    if (pipe(pfd))
+    if (pipe(pfd_in))
     {
-        perror("pipe failed!");
+        perror("pipe in failed!");
         onFail(errno);
         throw ProcessException(StatusCode(errno), strerror(errno));
     }
-
-    if (usepty)
+    if (redirect_stderr)
     {
-        pid = forkpty(&pfd_out[0], NULL, NULL, NULL);
+        if (pipe(pfd_err))
+        {
+            perror("pipe err failed!");
+            onFail(errno);
+            throw ProcessException(StatusCode(errno), strerror(errno));
+        }
     }
     else
     {
-        pid = fork();
-
-        if (pipe(pfd_out))
+        parent_stderr = dup(STDERR_FILENO);
+        if (parent_stderr < 0)
         {
-            perror("pipe pfd_out failed!");
-            onFail(errno);
-        throw ProcessException(StatusCode(errno), strerror(errno));
+            perror ("ERROR saving old STDERR");
+            throw ProcessException(StatusCode(errno), strerror(errno));
         }
     }
 
-    int parent_stderr = dup(STDERR_FILENO);
-
+    cout << "using pseudoterminal" << endl;
+    pid = forkpty(&fd_out, NULL, NULL, NULL);
     if(pid == -1)
     {
         onStateChange();
         onFail(errno);
+        perror("failed to forkpty");
         throw ProcessException(StatusCode(errno), strerror(errno));
     }
 
     // CHILD?
     if (pid == 0)
     {
-        int fd_in = pfd[0];
-        int fd_err = pfd[1];
-        int fd_out = pfd_out[1];
-        int fd_unused = pfd_out[0];
 
-        if (dup2 (fd_in, STDIN_FILENO) < 0)
+        close(pfd_in[1]);
+        close(pfd_err[0]);
+
+
+        if (dup2 (pfd_in[0], STDIN_FILENO) < 0)
         {
             perror ("ERROR redirecting stdin");
-            exit(EXIT_FAILURE);
-        }
-
-        if (!usepty)
-        {
-            if (dup2 (fd_out, STDOUT_FILENO) < 0)
-            {
-                perror ("ERROR redirecting stdout");
-                exit(EXIT_FAILURE);
-            }
-            close(fd_unused);
-            close(fd_out);
+            exit(10);
         }
 
         // either redirect to stderr of parent, or to pipe
-        if (dup2 (redirect_stderr? fd_err : parent_stderr, STDERR_FILENO) < 0)
+        if (dup2 (redirect_stderr?pfd_err[1]:parent_stderr, STDERR_FILENO) < 0)
         {
             perror ("ERROR redirecting STDERR");
-            exit(EXIT_FAILURE);
+            exit(12);
         }
 
-#if 0
-        /* Ensure that terminal echo is switched off so that we
-           do not get back from the spawned process the same
-           messages that we have sent it. //*/
-        struct termios orig_termios;
-        if (tcgetattr (fd_out, &orig_termios) < 0)
-        {
-            perror ("ERROR getting current terminal's attributes");
-            return -1;
-        }
-
-        orig_termios.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
-        orig_termios.c_oflag &= ~(ONLCR);
-
-        if (tcsetattr (fd_out, TCSANOW, &orig_termios) < 0)
-        {
-            perror ("ERROR setting current terminal's attributes");
-            return -1;
-        }
-#endif
         setvbuf (stdout, NULL, _IONBF, 0);
         setvbuf (stderr, NULL, _IONBF, 0);
 
-        close(fd_in);
-        close(fd_err);
+        close(pfd_in[0]);
+        close(pfd_err[1]);
 
-        char* c_argv[argv.size()+1];
-        int i = 0;
-        for (vector<string>::const_iterator it = argv.begin(); it!= argv.end(); it ++ )
-        {
-            c_argv[i++] = (char*)it->c_str();
-        }
-        c_argv[i++] = NULL;
+        if (redirect_stderr) close(parent_stderr);
 
-        if (execv(binary.c_str(), c_argv))
+        if (execv(program, argv))
         {
             perror("failed to execv");
-            exit(EXIT_FAILURE);
+            exit(13);
         }
-        return -1;
+        exit(14);
+    }
+    close(parent_stderr);
+
+    close(pfd_in[0]);
+    close(pfd_err[1]);
+
+
+    p_in = fdopen(pfd_in[1], "w");
+    p_out = fdopen(fd_out, "r");
+
+    if (redirect_stderr)
+    {
+        p_err = fdopen(pfd_err[0], "r");
+    }
+    else
+    {
+        p_err = NULL;
+        close(pfd_err[0]);
+    }
+}
+
+
+void Process::start_without_pty(const char* program, char* argv[])
+{
+    int pfd_in[2];
+    int pfd_out[2];
+    int pfd_err[2];
+    int parent_stderr = -1;
+
+    onStateChange();
+
+    if (pipe(pfd_in))
+    {
+        perror("pipe in failed!");
+        onFail(errno);
+        throw ProcessException(StatusCode(errno), strerror(errno));
     }
 
-    int fd_in = pfd[1];
-    int fd_err = pfd[0];
-    int fd_out = pfd_out[0];
-    int fd_unused = pfd_out[1];
+    if (pipe(pfd_out))
+    {
+        perror("pipe out failed!");
+        onFail(errno);
+        throw ProcessException(StatusCode(errno), strerror(errno));
+    }
 
-    if (!usepty) close(fd_unused);
+    if (redirect_stderr)
+    {
+        if (pipe(pfd_err))
+        {
+            perror("pipe err failed!");
+            onFail(errno);
+            throw ProcessException(StatusCode(errno), strerror(errno));
+        }
+    }
+    else
+    {
+        parent_stderr = dup(STDERR_FILENO);
+        if (parent_stderr < 0)
+        {
+            perror ("ERROR saving old STDERR");
+            throw ProcessException(StatusCode(errno), strerror(errno));
+        }
+    }
+
+
+
+    cout << "NOT using pseudoterminal" << endl;
+    pid = fork();
+    if(pid == -1)
+    {
+        onStateChange();
+        onFail(errno);
+        perror("failed to fork");
+        throw ProcessException(StatusCode(errno), strerror(errno));
+    }
+
+
+
+    // CHILD?
+    if (pid == 0)
+    {
+
+        close(pfd_in[1]);
+        close(pfd_out[0]);
+        close(pfd_err[0]);
+
+        if (dup2 (pfd_in[0], STDIN_FILENO) < 0)
+        {
+            perror ("ERROR redirecting stdin");
+            exit(10);
+        }
+
+        if (dup2 (pfd_out[1], STDOUT_FILENO) < 0)
+        {
+            perror ("ERROR redirecting stdout");
+            exit(11);
+        }
+
+        // either redirect to stderr of parent, or to pipe
+        if (dup2 (redirect_stderr? pfd_err[1] : parent_stderr, STDERR_FILENO) < 0)
+        {
+            perror ("ERROR redirecting STDERR");
+            exit(12);
+        }
+
+        setvbuf (stdout, NULL, _IONBF, 0);
+        setvbuf (stderr, NULL, _IONBF, 0);
+
+        close(pfd_in[0]);
+        close(pfd_out[1]);
+        close(pfd_err[1]);
+
+        if (redirect_stderr) close(parent_stderr);
+
+        if (execv(program, argv))
+        {
+            perror("failed to execv");
+            exit(13);
+        }
+        exit(14);
+    }
+
+    close(parent_stderr);
+
+    close(pfd_in[0]);
+    close(pfd_out[1]);
+    close(pfd_err[1]);
+
+    p_in = fdopen(pfd_in[1], "w");
+    p_out = fdopen(pfd_out[0], "r");
+
+    if (redirect_stderr)
+    {
+        p_err = fdopen(pfd_err[0], "r");
+    }
+    else
+    {
+        p_err = NULL;
+        close(pfd_err[0]);
+    }
+}
+
+
+void Process::start(const string& binary, const vector<string>& argv)
+{
+
+    char* c_argv[argv.size()+1];
+    int i = 0;
+    for (vector<string>::const_iterator it = argv.begin(); it!= argv.end(); it ++ )
+    {
+        c_argv[i++] = (char*)it->c_str();
+    }
+    c_argv[i++] = NULL;
+
+
+    start_without_pty(binary.c_str(), c_argv);
 
     // PARENT
     onStateChange();
-    usleep(100);
 
-
-    p_in = fdopen(fd_in, "w");
-    p_out = fdopen(fd_out, "r");
-    p_err = redirect_stderr ? fdopen(fd_err, "r") : NULL;
 
     setvbuf ( p_in , NULL , _IONBF , 0);
     setvbuf ( p_out , NULL , _IONBF , 0);
-    p_err && setvbuf ( p_err , NULL , _IONBF , 0);
+    if(p_err) setvbuf ( p_err , NULL , _IONBF , 0);
 
-    if (print_exit_details)
-        printf("fd's: %p %p %p %d %d %d\n", p_in, p_out, p_err, fileno(p_in), p_out ? fileno(p_out):-1, p_err ? fileno(p_err):-1);
+    if (true || print_exit_details)
+        cerr << "fd's: "
+             << p_in << " "
+             << p_out << " "
+             << p_err << " "
+             << (p_in ? fileno(p_in):-1) << " "
+             << (p_out ? fileno(p_out):-1) << " "
+             << (p_err ? fileno(p_err):-1) << endl;
 
-    return 0;
+    running = true;
+
 }
 
 
 bool Process::isAlive()
 {
 
-    if (pid == 0) return false;
+    //if (running == false) return false;
 
     int w = 0;
 
@@ -194,13 +308,12 @@ bool Process::isAlive()
         perror("waitpid");
         return false;
     }
-    if (siginfo.si_pid != pid)
+    if (siginfo.si_pid == pid)
     {
-        return true;
+        status_last_wait = siginfo.si_status;
+        return false;
     }
-    pid = 0;
-    status_last_wait = siginfo.si_status;
-    return false;
+    return true;
 }
 
 
@@ -212,43 +325,28 @@ void Process::join()
     p_in && fflush(p_in);
     p_in && fclose(p_in);
 
+    w = waitpid (pid, &status, 0);
+    if (w==-1)
+    {
+        perror("waitpid, join");
+    }
+
     p_out && fflush(p_out);
     p_err && fflush(p_err);
     p_out && fclose(p_out);
     p_err && fclose(p_err);
 
-    if (isAlive())
-    {
-        w = waitpid (pid, &status, 0);
-        if (w==-1)
-        {
-            perror("waitpid, join");
-        }
-    }
-    else
-    {
-        status = status_last_wait;
-    }
+    pid = 0;
 
-    if (print_exit_details)
+    if (status)
     {
-
-        printf("WIFEXITED: %d\n", WIFEXITED(status));
-        printf("WEXITSTATUS: %d\n", WEXITSTATUS(status));
-        printf("WIFSIGNALED: %d\n", WIFSIGNALED(status));
-        printf("WCOREDUMP: %d\n", WCOREDUMP(status));
-        printf("WTERMSIG: %d\n", WTERMSIG(status));
-        printf("WCOREDUMP: %d\n", WCOREDUMP(status));
-        printf("WIFSTOPPED: %d\n", WIFSTOPPED(status));
-        printf("WSTOPSIG: %d\n", WSTOPSIG(status));
-        printf("WIFCONTINUED: %d\n", WIFCONTINUED(status));
-    }
-
-    if (status) {
         onFail(status);
         throw ProcessException(status, "Process returned with unsuccessful exit code.");
     }
     else onSuccess();
+
+
+    fflush(NULL);
 
     pid = 0;
 }
@@ -262,6 +360,7 @@ bool Process::fd_is_open(FILE* fd)
 bool Process::can_read_from_fd(FILE* fd)
 {
 
+    if (fd == NULL) return false;
     //if (!isAlive()) return false;
 
     if (feof(fd))
@@ -270,7 +369,7 @@ bool Process::can_read_from_fd(FILE* fd)
     }
     if (ferror(fd))
     {
-        //  perror("read from fd");
+//        perror("read from fd");
         return false;
     }
     if (!fd_is_open(fd))

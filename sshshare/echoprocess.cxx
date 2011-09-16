@@ -1,3 +1,6 @@
+#include <vector>
+
+
 #include "echoprocess.hxx"
 
 EchoProcess::EchoProcess()

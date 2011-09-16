@@ -39,9 +39,7 @@ int main()
         else if (retval)
         {
 
-            char c;
-            read(0, &c, 1);
-            fprintf(stderr, "read char: %c\n", c);
+            fprintf(stderr, "read char: %c\n", (char)fgetc(stdin));
         }
 
 

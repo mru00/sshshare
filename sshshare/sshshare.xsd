@@ -1,37 +1,41 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
 
+    <xs:annotation>
+        <xs:appinfo>sshshare</xs:appinfo>
+        <xs:documentation xml:lang="en">
+            Data schema for sshshare maintained share management of ~/public_html, htaccess and htpasswd.
+            See also: https://github.com/mru00/sshshare
+        </xs:documentation>
+    </xs:annotation>
 
-  <xs:element name="shares" type="shares_t"/>
-
-
+    <xs:element name="shares" type="shares_t"/>
 
     <xs:complexType name="shares_t">
-      <xs:sequence>
-        <xs:element name="share" type="share_t" minOccurs="0" maxOccurs="unbounded"/>
-      </xs:sequence>
+        <xs:sequence>
+            <xs:element name="share" type="share_t" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="share_t">
-    <xs:sequence>
-    <xs:element name="name" type="xs:Name" maxOccurs="1" minOccurs="1"/>
-    <xs:element name="description" type="xs:string" maxOccurs="1" minOccurs="0"/>
-    <xs:element name="users" type="users_t" minOccurs="1" maxOccurs="1"/>
-  </xs:sequence></xs:complexType>
+        <xs:sequence>
+            <xs:element name="name" type="xs:Name" maxOccurs="1" minOccurs="1"/>
+            <xs:element name="description" type="xs:string" maxOccurs="1" minOccurs="0"/>
+            <xs:element name="users" type="users_t" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
 
+    <xs:complexType name="users_t">
+        <xs:sequence>
+            <xs:element name="user" type="user_t" maxOccurs="unbounded" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
 
-
-  <xs:complexType name="users_t">
-  <xs:sequence>
-  <xs:element name="user" type="user_t" maxOccurs="unbounded" minOccurs="0"/>
-  </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="user_t">
-  <xs:sequence>
-  <xs:element name="name" type="xs:Name" maxOccurs="1" minOccurs="1"/>
-    <xs:element name="password" type="xs:string" maxOccurs="1" minOccurs="1"/>
-  </xs:sequence>
-  </xs:complexType>
+    <xs:complexType name="user_t">
+        <xs:sequence>
+            <xs:element name="name" type="xs:Name" maxOccurs="1" minOccurs="1" default="user"/>
+            <xs:element name="password" type="xs:string" maxOccurs="1" minOccurs="1" default="password"/>
+        </xs:sequence>
+    </xs:complexType>
 
 </xs:schema>

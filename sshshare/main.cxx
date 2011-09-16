@@ -1,14 +1,19 @@
 #include <gtk/gtk.h>
 #include <iostream>
 #include <fstream>
+#include <boost/filesystem.hpp>
+
 
 #include "sshshare.hxx"
 #include "scp.hxx"
 #include "shares.hxx"
 #include "scp.hxx"
 #include "config.hxx"
+#include "password.hxx"
+
 
 using namespace std;
+namespace fs = boost::filesystem;
 
 
 auto_ptr<shares_t> shares_ptr;
@@ -18,13 +23,38 @@ GtkTextBuffer* text_template_buffer;
 GtkWidget* dialog_comm;
 
 
-static void populate_shares_list(GtkListStore* store, auto_ptr<shares_t>& shares);
-static void populate_users_list(GtkListStore* store, users_t& users);
 
 static void set_label_href(const string& share)
 {
     gtk_label_set_markup (GTK_LABEL(label_href), string("<a href=\"" + Config::makeHttpUrl(share) + "\">"+Config::makeHttpUrl(share)+"</a>").c_str());
     gtk_label_set_markup (GTK_LABEL(label_sftp), string("<a href=\"" + Config::makeSftpUrl(share) + "\">"+Config::makeSftpUrl(share)+"</a>").c_str());
+}
+
+struct list_store_set_share {
+    typedef shares_t::share_sequence seq_type;
+    typedef share_t val_type; int i;
+    list_store_set_share() : i(0) { gtk_list_store_clear(list_store_shares); }
+    void operator ()(const share_t& share) {
+        GtkTreeIter iter;
+        gtk_list_store_append(list_store_shares, &iter);
+        gtk_list_store_set(list_store_shares, &iter, 0, i++, 1, share.name().c_str(), -1);
+    }
+};
+
+struct list_store_set_user {
+    typedef users_t::user_sequence seq_type;
+    typedef user_t val_type; int i;
+    list_store_set_user() : i(0) { gtk_list_store_clear(list_store_users); }
+    void operator ()(const user_t& user) {
+        GtkTreeIter iter;
+        gtk_list_store_append(list_store_users, &iter);
+        gtk_list_store_set(list_store_users, &iter, 0, i++, 1, user.name().c_str(), 2, user.password().c_str(), -1);
+    }
+};
+
+template<typename setter> static void pop_list(const typename setter::seq_type& sequence)
+{
+    for_each(sequence.begin(), sequence.end(), setter());
 }
 
 static void update_template_buffer()
@@ -64,17 +94,19 @@ static void update_template_buffer()
         }
         else
         {
-            gtk_text_buffer_set_text(text_template_buffer, "", -1);
+            gtk_text_buffer_set_text(text_template_buffer, "\n\n\n\n", -1);
         }
     }
     else
     {
-        gtk_text_buffer_set_text(text_template_buffer, "", -1);
+        gtk_text_buffer_set_text(text_template_buffer, "\n\n\n\n", -1);
     }
 }
 
 static void dialog_warn(GtkWidget* win, const string& message)
 {
+    cerr << "Warning message: " << message << endl;
+
     GtkWidget* dialog = gtk_message_dialog_new (GTK_WINDOW(win),
                         GTK_DIALOG_MODAL,
                         GTK_MESSAGE_ERROR,
@@ -97,7 +129,13 @@ static bool validName(const string& str)
     return true;
 }
 
-static void cb_add_user(GtkWidget *wid, GtkWidget *win)
+struct compare_name {
+    string new_name;
+    compare_name(const string& name) : new_name(name) {}
+    bool operator ()(const user_t& user) { return user.name() == new_name; }
+};
+
+static void cb_add_user(GtkWidget *, GtkWidget *win)
 {
 
     GtkTreeSelection *selection;
@@ -112,9 +150,18 @@ static void cb_add_user(GtkWidget *wid, GtkWidget *win)
         gtk_tree_model_get (model, &i1, 0, &index, 1, &name, -1);
         share_t& share = shares_ptr->share()[index];
 
-        auto_ptr<user_t> new_user ( new user_t("name", "password"));
+        string new_name;
+        for (int i = 0; ;i++) {
+            stringstream ss;
+            ss << "user" << i;
+            new_name = ss.str();
+            const users_t::user_sequence& user=share.users().user();
+            if (find_if(user.begin(), user.end(), compare_name(new_name)) == user.end()) break;
+        }
+
+        auto_ptr<user_t> new_user ( new user_t(new_name, Password::generate(8)));
         share.users().user().push_back(new_user);
-        populate_users_list(list_store_users, share.users());
+        pop_list<list_store_set_user>(share.users().user());
         g_free(name);
     }
     else
@@ -124,7 +171,7 @@ static void cb_add_user(GtkWidget *wid, GtkWidget *win)
 
 }
 
-static void cb_new_share(GtkWidget *wid, GtkWidget *win)
+static void cb_new_share(GtkWidget *, GtkWidget *win)
 {
 
     GtkWidget *dialog = gtk_dialog_new_with_buttons ("New Share",
@@ -150,7 +197,6 @@ static void cb_new_share(GtkWidget *wid, GtkWidget *win)
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
     {
         const gchar* name = gtk_entry_get_text(GTK_ENTRY(entry));
-        printf ("new: %s\n", name);
 
         if (!validName(name))
         {
@@ -162,13 +208,13 @@ static void cb_new_share(GtkWidget *wid, GtkWidget *win)
             auto_ptr<share_t> share (new share_t(name, users));
 
             shares_ptr->share().push_back(share);
-            populate_shares_list(list_store_shares, shares_ptr);
+            pop_list<list_store_set_share>(shares_ptr->share());
         }
     }
     gtk_widget_destroy(dialog);
 }
 
-static void cb_apply (GtkWidget *wid, GtkWidget *win)
+static void cb_apply (GtkWidget *, GtkWidget *win)
 {
     GtkTreeSelection *selection;
     GtkTreeModel     *model;
@@ -188,9 +234,12 @@ static void cb_apply (GtkWidget *wid, GtkWidget *win)
         }
         else
         {
-            try{
-            create_share(name, share.users());
-            }catch (ProcessException& e) {
+            try
+            {
+                create_share(name, share.users().user());
+            }
+            catch (ProcessException& e)
+            {
                 dialog_warn(win,e.what());
             }
         }
@@ -203,7 +252,7 @@ static void cb_apply (GtkWidget *wid, GtkWidget *win)
 }
 
 
-static void cb_info (GtkWidget *wid, GtkWidget *win)
+static void cb_info (GtkWidget *, GtkWidget *win)
 {
     GtkWidget *dialog = NULL;
 
@@ -213,37 +262,9 @@ static void cb_info (GtkWidget *wid, GtkWidget *win)
     gtk_widget_destroy (dialog);
 }
 
-static void populate_shares_list(GtkListStore* store, auto_ptr<shares_t>& shares)
-{
-    gtk_list_store_clear(store);
-    GtkTreeIter iter;
-    int i = 0;
-    for (shares_t::share_const_iterator it (shares->share ().begin ());
-            it != shares->share ().end ();
-            ++it, ++i)
-    {
-        gtk_list_store_append(store, &iter);
-        gtk_list_store_set(store, &iter, 0, i, 1, it->name().c_str(), -1);
-    }
-}
 
-static void populate_users_list(GtkListStore* store, users_t& users)
-{
 
-    gtk_list_store_clear(store);
-
-    GtkTreeIter iter;
-    int i  =0;
-    for (users_t::user_const_iterator it (users.user().begin ());
-            it != users.user().end ();
-            ++it, ++i)
-    {
-        gtk_list_store_append(store, &iter);
-        gtk_list_store_set(store, &iter, 0, i, 1, it->name().c_str(), 2, it->password().c_str(), -1);
-    }
-}
-
-static void share_selection_changed_cb (GtkTreeSelection *selection, gpointer data)
+static void share_selection_changed_cb (GtkTreeSelection *selection, gpointer )
 {
     GtkTreeIter iter;
     GtkTreeModel *model;
@@ -257,7 +278,7 @@ static void share_selection_changed_cb (GtkTreeSelection *selection, gpointer da
         if (validName(name))
         {
             share_t& share = shares_ptr->share()[index];
-            populate_users_list(list_store_users, share.users());
+            pop_list<list_store_set_user>(share.users().user());
             set_label_href(name);
         }
 
@@ -267,7 +288,7 @@ static void share_selection_changed_cb (GtkTreeSelection *selection, gpointer da
     }
 }
 
-static void user_selection_changed_cb (GtkTreeSelection *selection, gpointer data)
+static void user_selection_changed_cb (GtkTreeSelection *selection, gpointer )
 {
     GtkTreeIter iter;
     GtkTreeModel *model;
@@ -302,6 +323,10 @@ static GtkWidget* create_list_shares(GtkWidget* win)
 
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
 
+    GtkWidget* scrollwindow = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+
+
     GtkListStore* store = gtk_list_store_new(2, G_TYPE_INT, G_TYPE_STRING);
     GtkWidget* list = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
     GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
@@ -313,14 +338,15 @@ static GtkWidget* create_list_shares(GtkWidget* win)
 
     setup_selection(GTK_TREE_VIEW(list), G_CALLBACK(share_selection_changed_cb));
 
-    gtk_box_pack_start (GTK_BOX (vbox), list, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(scrollwindow), list);
+    gtk_box_pack_start (GTK_BOX (vbox), scrollwindow, TRUE, TRUE, 0);
     return vbox;
 }
 
 static void user_cell_edited_callback (GtkCellRendererText *cell,
-                                       gchar               *path_string,
+                                       gchar               *,
                                        gchar               *new_text,
-                                       gpointer             user_data)
+                                       gpointer             )
 {
     if (!validName(new_text)) return;
     GtkTreeSelection *selection;
@@ -346,7 +372,7 @@ static void user_cell_edited_callback (GtkCellRendererText *cell,
                 user.name(new_text);
             else if (column_number == 1)
                 user.password(new_text);
-            populate_users_list(list_store_users, share.users());
+            pop_list<list_store_set_user>(share.users().user());
         }
     }
 }
@@ -371,6 +397,10 @@ static GtkWidget* create_users_box(GtkWidget* win)
     GtkListStore* store = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING);
     GtkWidget* list = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
 
+
+    GtkWidget* scrollwindow = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+
     GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
     g_object_set(renderer, "editable", TRUE, NULL);
     g_signal_connect(renderer, "edited", (GCallback) user_cell_edited_callback, NULL);
@@ -394,7 +424,8 @@ static GtkWidget* create_users_box(GtkWidget* win)
     list_store_users = store;
     list_view_users = list;
 
-    gtk_box_pack_start (GTK_BOX (vbox), list, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(scrollwindow), list);
+    gtk_box_pack_start (GTK_BOX (vbox), scrollwindow, TRUE, TRUE, 0);
     return vbox;
 }
 
@@ -430,6 +461,7 @@ static GtkWidget* create_right_box(GtkWidget* win)
     gtk_box_pack_start(GTK_BOX(vbox), label_href, FALSE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), label_sftp, FALSE, TRUE, 0);
     text_template_buffer = gtk_text_buffer_new(NULL);
+    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(text_template_buffer), "\n\n\n\n", -1);
 
     GtkWidget* text_template = gtk_text_view_new_with_buffer(text_template_buffer);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(text_template), FALSE);
@@ -470,10 +502,8 @@ static GtkWidget* create_ui()
 
 static void create_dialog_comm()
 {
-
     dialog_comm = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_INFO,GTK_BUTTONS_NONE,
                                          "%s", "Communicating with server");
-
 }
 
 int main (int argc, char *argv[])
@@ -486,36 +516,49 @@ int main (int argc, char *argv[])
 
     create_dialog_comm();
 
-
     try
     {
         gtk_widget_show_all(dialog_comm);
         ScpProcess(Config::makePath("shares/" + Config::xmlfilename), ".").run();
         gtk_widget_hide(dialog_comm);
 
-
-        try
+        if (fs::exists(fs::status(Config::xmlfilename)))
         {
+            try
+            {
+                shares_ptr = shares(Config::xmlfilename);
+            }
+            catch (xml_schema::parsing ex)
+            {
+                stringstream str;
+                str << "Failed to parse file: " << endl;
+                str << ex << endl << endl;
+                str << "This is a terminal error." << endl;
 
-            shares_ptr = shares(Config::xmlfilename);
+                cerr << str.str() << endl;
+
+                dialog_warn(NULL, str.str());
+
+                exit(EXIT_FAILURE);
+            }
         }
-        catch (xml_schema::parsing ex)
+        else
         {
-            dialog_warn(NULL, "failed to load file, starting a fresh one");
-            printf ("failed to load file, starting a fresh one.");
+            dialog_warn(NULL, "Failed to load file, starting a fresh one.");
             shares_ptr.reset(new shares_t());
         }
     }
     catch (ProcessException& e)
     {
-        dialog_warn(NULL, "Failed to communicate with server. Please check console output.");
+        cerr << "Exception: " << e.what() << endl;
+        dialog_warn(NULL, "Failed to communicate with server. Please check console output. Terminating.");
         gtk_widget_hide(dialog_comm);
-        return 1;
+        exit(1);
     }
 
 
     GtkWidget *win = create_ui();
-    populate_shares_list(list_store_shares, shares_ptr);
+    pop_list<list_store_set_share>(shares_ptr->share());
 
 
     /* Enter the main loop */
@@ -526,7 +569,7 @@ int main (int argc, char *argv[])
     //
     xml_schema::namespace_infomap map;
     map[""].name = "";
-    map[""].schema = Config::xsdfilename;
+    map[""].schema = Config::getDataNamespace();
 
     std::ofstream ofs (Config::xmlfilename.c_str());
     shares (ofs, *shares_ptr, map);
@@ -538,10 +581,12 @@ int main (int argc, char *argv[])
     }
     catch (ProcessException& e)
     {
+        cerr << "Exception: " << e.what() << endl;
         dialog_warn(NULL, "Failed to communicate with server. Please check console output.");
     }
     gtk_widget_hide(dialog_comm);
 
     return 0;
 }
+
 
