@@ -44,6 +44,18 @@
         <name>user3</name>
         <password>uOvdagN2</password>
       </user>
+      <user>
+        <name>user4</name>
+        <password>HGddsZKy</password>
+      </user>
+      <user>
+        <name>user5</name>
+        <password>N28yM4Nw</password>
+      </user>
+      <user>
+        <name>user6</name>
+        <password>HGddsZKy</password>
+      </user>
     </users>
   </share>
 
@@ -233,6 +245,11 @@
         <password>ffacbim4</password>
       </user>
     </users>
+  </share>
+
+  <share>
+    <name>ert4</name>
+    <users/>
   </share>
 
 </shares>

@@ -2,6 +2,9 @@
 #include <iostream>
 #include <fstream>
 #include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
+#include <boost/bind.hpp>
+
 
 
 #include "sshshare.hxx"
@@ -30,22 +33,34 @@ static void set_label_href(const string& share)
     gtk_label_set_markup (GTK_LABEL(label_sftp), string("<a href=\"" + Config::makeSftpUrl(share) + "\">"+Config::makeSftpUrl(share)+"</a>").c_str());
 }
 
-struct list_store_set_share {
+struct list_store_set_share
+{
     typedef shares_t::share_sequence seq_type;
-    typedef share_t val_type; int i;
-    list_store_set_share() : i(0) { gtk_list_store_clear(list_store_shares); }
-    void operator ()(const share_t& share) {
+    typedef share_t val_type;
+    int i;
+    list_store_set_share() : i(0)
+    {
+        gtk_list_store_clear(list_store_shares);
+    }
+    void operator ()(const share_t& share)
+    {
         GtkTreeIter iter;
         gtk_list_store_append(list_store_shares, &iter);
         gtk_list_store_set(list_store_shares, &iter, 0, i++, 1, share.name().c_str(), -1);
     }
 };
 
-struct list_store_set_user {
+struct list_store_set_user
+{
     typedef users_t::user_sequence seq_type;
-    typedef user_t val_type; int i;
-    list_store_set_user() : i(0) { gtk_list_store_clear(list_store_users); }
-    void operator ()(const user_t& user) {
+    typedef user_t val_type;
+    int i;
+    list_store_set_user() : i(0)
+    {
+        gtk_list_store_clear(list_store_users);
+    }
+    void operator ()(const user_t& user)
+    {
         GtkTreeIter iter;
         gtk_list_store_append(list_store_users, &iter);
         gtk_list_store_set(list_store_users, &iter, 0, i++, 1, user.name().c_str(), 2, user.password().c_str(), -1);
@@ -118,22 +133,20 @@ static void dialog_warn(GtkWidget* win, const string& message)
 
 static bool validName(const string& str)
 {
-    string::const_iterator it = str.begin();
-
-    if (it == str.end()) return false;
-    if (!isalpha(*it++)) return false;
-    for (; it != str.end(); it ++)
-    {
-        if (!isalnum(*it) && *it != '_') return false;
-    }
-    return true;
+    static const boost::regex e( "[a-zA-Z][a-zA-Z0-9_]*");
+    return regex_match(str, e);
 }
 
-struct compare_name {
-    string new_name;
-    compare_name(const string& name) : new_name(name) {}
-    bool operator ()(const user_t& user) { return user.name() == new_name; }
-};
+static bool compare_name (const string& name, const user_t& user)
+{
+    return user.name() == name;
+}
+
+template <typename U, typename T>
+bool exists (const U& collection, const T& predicate)
+{
+    return find_if(collection.begin(), collection.end(), predicate) == collection.end();
+}
 
 static void cb_add_user(GtkWidget *, GtkWidget *win)
 {
@@ -151,12 +164,15 @@ static void cb_add_user(GtkWidget *, GtkWidget *win)
         share_t& share = shares_ptr->share()[index];
 
         string new_name;
-        for (int i = 0; ;i++) {
+        for (int i = 0; ; i++)
+        {
             stringstream ss;
             ss << "user" << i;
             new_name = ss.str();
             const users_t::user_sequence& user=share.users().user();
-            if (find_if(user.begin(), user.end(), compare_name(new_name)) == user.end()) break;
+
+            //if (find_if(user.begin(), user.end(), boost::bind(compare_name,new_name,_1)) == user.end()) break;
+            if ( exists(user, boost::bind(compare_name,new_name,_1)) ) break;
         }
 
         auto_ptr<user_t> new_user ( new user_t(new_name, Password::generate(8)));

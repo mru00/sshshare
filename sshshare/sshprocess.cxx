@@ -1,6 +1,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/foreach.hpp>
+
 #include <stdio.h>
 #include <iostream>
 #include <string>
@@ -25,20 +27,18 @@ SshProcess::~SshProcess()
 }
 
 void SshProcess::dump_buffers() {
-    while (p_err && can_read_from_fd(p_err) )
-    {
+
+    while (can_read_from_fd(p_err) )
         cerr << "[sshprocess/stderr] " << (char)fgetc(p_err) << endl;
-    };
-    while (p_out && can_read_from_fd(p_out) )
-    {
+
+    while (can_read_from_fd(p_out) )
         cout << "[sshprocess/stdout] " << (char)fgetc(p_out) << endl;
-    };
+
 
 }
 
 void SshProcess::join()
 {
-    //write("exit");
     dump_buffers();
     Process::join();
 }
@@ -52,10 +52,6 @@ void SshProcess::write(const string& line)
     usleep(1000);
 }
 
-void print_vector(const string& str)
-{
-    cerr << "argument vector: " << str << endl;
-}
 
 void SshProcess::run(const vector<string>& additional_arguments)
 {
@@ -65,7 +61,9 @@ void SshProcess::run(const vector<string>& additional_arguments)
     //argv.push_back("-t");
     argv.insert(argv.end(), additional_arguments.begin(), additional_arguments.end());
 
-    for_each(argv.begin(), argv.end(), print_vector);
+    BOOST_FOREACH(string s, argv)
+        cerr << "argument vector: "<<s<< endl;
+
 
     Process::start(argv[0], argv);
 }

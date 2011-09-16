@@ -35,24 +35,20 @@ void LinewiseProcess::run(const std::string& binary, const std::vector<std::stri
     while (isAlive())
     {
 
-        while (p_err && can_read_from_fd(p_err) )
-        {
+        while (can_read_from_fd(p_err) )
             append(b_stderr, fgetc(p_err), &LinewiseProcess::onStderr);
-        };
-        while (p_out && can_read_from_fd(p_out) )
-        {
+
+        while (can_read_from_fd(p_out) )
             append(b_stdout, fgetc(p_out), &LinewiseProcess::onStdout);
-        };
+
     }
 
-    while (p_err && can_read_from_fd(p_err) )
-    {
+    while (can_read_from_fd(p_err) )
         append(b_stderr, fgetc(p_err), &LinewiseProcess::onStderr);
-    };
-    while (p_out && can_read_from_fd(p_out) )
-    {
+
+    while (can_read_from_fd(p_out) )
         append(b_stdout, fgetc(p_out), &LinewiseProcess::onStdout);
-    };
+
 
 
     join();

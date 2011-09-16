@@ -114,8 +114,8 @@ private:
     int status_last_wait;
     bool redirect_stdout;
     bool redirect_stderr;
-    bool running;
     bool use_pty;
+    bool running;
 };
 
 

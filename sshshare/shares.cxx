@@ -4,6 +4,8 @@
 #include <iostream>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+
 
 #include "shares.hxx"
 #include "scp.hxx"
@@ -13,30 +15,6 @@
 
 using namespace std;
 
-
-struct concat
-{
-    SshProcess& ssh;
-    int i;
-    string htpasswd;
-    concat(SshProcess& ssh, const string& htpasswd) : ssh(ssh), i(0), htpasswd(htpasswd) {}
-    void operator()(const user_t& user)
-    {
-        stringstream ss;
-        ss << "htpasswd " << (i++ ? "" : "-c") << " -b " << htpasswd << " \"" << user.name() << "\" \"" << user.password() << "\"";
-        ssh.write(ss.str());
-    }
-};
-
-struct sshwrite
-{
-    SshProcess& ssh;
-    sshwrite(SshProcess& ssh) : ssh(ssh) {}
-    void operator()(const string& s)
-    {
-        ssh.write(s);
-    }
-};
 
 void create_share(string name, const users_t::user_sequence& users)
 {
@@ -72,12 +50,18 @@ void create_share(string name, const users_t::user_sequence& users)
         cerr << "call script" << endl;
 
         {
+            int i  = 0;
             SshProcess ssh(Config::makeUrl());
             ssh.run();
             ssh.write("set -xe");
             ssh.write("mkdir -p ~/public_html/shares/" + name);
             ssh.write("mkdir -p ~/shares");
-            for_each(users.begin(), users.end(), concat(ssh, htpasswd));
+            BOOST_FOREACH(const user_t& user, users)
+            {
+                stringstream ss;
+                ss << "htpasswd " << (i++ ? "" : "-c") << " -b " << htpasswd << " \"" << user.name() << "\" \"" << user.password() << "\"";
+                ssh.write(ss.str());
+            }
             //ssh.write("date > ~/iwashere");
             //ssh.write("exit 0");
             ssh.join();
