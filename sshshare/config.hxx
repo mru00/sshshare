@@ -42,6 +42,8 @@ public:
         return "http://sisyphus.teil.cc/~mru/sshshare.xsd";
     }
 
+    static std::string getUsername() {return config.getUsername();}
+
     static XmlConfig config;
     static const std::string xmlfilename;
 };

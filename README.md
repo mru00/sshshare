@@ -25,6 +25,8 @@ Screenshots
 -----------
 
 ![screenshot](https://github.com/mru00/sshshare/raw/master/doc/screenshot1.png)
+![screenshot](https://github.com/mru00/sshshare/raw/master/doc/screenshot2.png)
+![screenshot](https://github.com/mru00/sshshare/raw/master/doc/screenshot3.png)
 
 
 File organisation

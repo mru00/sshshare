@@ -23,18 +23,11 @@ SshProcess::SshProcess(const std::string& url)
 
 SshProcess::~SshProcess()
 {
-    //dtor
 }
 
 void SshProcess::dump_buffers() {
-
-    while (can_read_from_fd(p_err) )
-        cerr << "[sshprocess/stderr] " << (char)fgetc(p_err) << endl;
-
-    while (can_read_from_fd(p_out) )
-        cout << "[sshprocess/stdout] " << (char)fgetc(p_out) << endl;
-
-
+    while (can_read_from_fd(p_err) ) cerr << "[sshprocess/stderr] " << (char)fgetc(p_err) << endl;
+    while (can_read_from_fd(p_out) ) cout << "[sshprocess/stdout] " << (char)fgetc(p_out) << endl;
 }
 
 void SshProcess::join()
@@ -45,6 +38,14 @@ void SshProcess::join()
 
 void SshProcess::write(const string& line)
 {
+    if (!isAlive()) {
+        throw ProcessException(StatusCode(-1), "State error: process not started!");
+    }
+    if (p_in == NULL) {
+        throw ProcessException(StatusCode(-1), "State error: p_in not open!");
+    }
+
+
     dump_buffers();
     fprintf(p_in, "%s\n", line.c_str());
     fflush(p_in);
@@ -63,7 +64,6 @@ void SshProcess::run(const vector<string>& additional_arguments)
 
     BOOST_FOREACH(string s, argv)
         cerr << "argument vector: "<<s<< endl;
-
 
     Process::start(argv[0], argv);
 }

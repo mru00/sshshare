@@ -21,7 +21,10 @@ using namespace std;
 
 
 Process::Process(bool ro, bool re, bool pty)
-    : redirect_stdout(ro)
+    : p_in(NULL)
+    , p_out(NULL)
+    , p_err(NULL)
+    , redirect_stdout(ro)
     , redirect_stderr(re)
     , use_pty(pty)
     , running(false)
@@ -30,6 +33,9 @@ Process::Process(bool ro, bool re, bool pty)
 
 Process::~Process()
 {
+    if (pid != 0) {
+        cerr << "Process should have been joined!" << endl;
+    }
 }
 
 void Process::start_with_pty(const char* program, char* argv[])
@@ -324,6 +330,7 @@ void Process::join()
 
     p_in && fflush(p_in);
     p_in && fclose(p_in);
+    p_in = NULL;
 
     w = waitpid (pid, &status, 0);
     if (w==-1)
@@ -335,6 +342,9 @@ void Process::join()
     p_err && fflush(p_err);
     p_out && fclose(p_out);
     p_err && fclose(p_err);
+
+
+    p_out = p_err = NULL;
 
     pid = 0;
 
@@ -362,16 +372,16 @@ bool Process::can_read_from_fd(FILE* fd)
 
     if (fd == NULL) return false;
     //if (!isAlive()) return false;
-
-    if (feof(fd))
-    {
-        return false;
-    }
     if (ferror(fd))
     {
 //        perror("read from fd");
         return false;
     }
+    if (feof(fd))
+    {
+        return false;
+    }
+
     if (!fd_is_open(fd))
     {
         //  return false;

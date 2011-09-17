@@ -38,6 +38,7 @@
 			<Add option="`pkg-config gtk+-2.0 --libs` -lxerces-c" />
 			<Add option="-lutil" />
 			<Add option="-lboost_filesystem -lboost_system" />
+			<Add option="-lboost_regex" />
 		</Linker>
 		<Unit filename="../.gitignore" />
 		<Unit filename="../README.md" />

@@ -24,7 +24,7 @@ void create_share(string name, const users_t::user_sequence& users)
         return;
     }
 
-    string htpasswd("/home/mru/shares/htpasswd."+name);
+    string htpasswd("/home/" + Config::getUsername() + "/shares/htpasswd."+name);
     string htaccess("public_html/shares/"+name+"/.htaccess");
     string script_fn_local = "/tmp/create_share.sh";
 
@@ -75,4 +75,31 @@ void create_share(string name, const users_t::user_sequence& users)
         cerr << "Exception: " << e.what() << endl;
         throw;
     }
+}
+
+void delete_share(const share_t& share, bool keep_data) {
+
+    try {
+        SshProcess ssh(Config::makeUrl());
+        ssh.run();
+        ssh.write("rm ~/shares/htpasswd." + share.name());
+
+        if (keep_data) {
+
+            string sharedir = "~/public_html/shares/" + share.name();
+            string deldir = "~/shares/deleted_shares/";
+
+            ssh.write("if [ -d " + sharedir + " ]; then mkdir -p " + deldir + " ; mv "+sharedir + " " + deldir + "; fi");
+        }
+        else {
+            ssh.write("rm -rf ~/public_html/shares/" + share.name());
+        }
+
+        ssh.join();
+    }
+    catch (ProcessException& e) {
+        cerr << "Exception: " << e.what() << endl;
+        throw;
+    }
+
 }
