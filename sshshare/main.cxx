@@ -288,7 +288,7 @@ static void cb_remove_share(GtkWidget *, GtkWidget *win)
         return;
     }
 
-    GtkWidget *dialog = gtk_dialog_new_with_buttons ("New Share",
+    GtkWidget *dialog = gtk_dialog_new_with_buttons ("Remove Share",
                         GTK_WINDOW(win),
                         GTK_DIALOG_MODAL ,
                         GTK_STOCK_OK,
@@ -307,7 +307,7 @@ static void cb_remove_share(GtkWidget *, GtkWidget *win)
     /* Create a radio button with a GtkEntry widget */
     radio_keep = gtk_radio_button_new_with_label (NULL, "Keep Data (data will be moved to ~/shares/deleted_shares)");
     radio_delete = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (radio_keep),
-                   "Delete share Data");
+                   "Delete share data");
     /* Pack them into a box, then show all the widgets */
 
     gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 2);
