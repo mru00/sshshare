@@ -39,6 +39,7 @@
 			<Add option="-lutil" />
 			<Add option="-lboost_filesystem -lboost_system" />
 			<Add option="-lboost_regex" />
+			<Add option="-lboost_date_time" />
 		</Linker>
 		<Unit filename="../.gitignore" />
 		<Unit filename="../README.md" />
