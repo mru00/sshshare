@@ -5,6 +5,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 
 
 #include "shares.hxx"
@@ -14,90 +15,121 @@
 #include "config.hxx"
 
 using namespace std;
+using boost::format;
+using boost::io::group;
 
 
 void create_share(string name, const users_t::user_sequence& users)
 {
     if (users.size() == 0)
     {
-        printf("no users specified!");
-        return;
-    }
+        cerr << "no users specified! not creating htpasswd" << endl;
 
-    string htpasswd("/home/" + Config::getUsername() + "/shares/htpasswd."+name);
-    string htaccess("public_html/shares/"+name+"/.htaccess");
-    string script_fn_local = "/tmp/create_share.sh";
-
-    ofstream hta("htaccess");
-    //hta << "Option +Indexes" << endl;
-    //hta << "IndexOptions -FancyIndexing" << endl;
-    hta << "AuthUserFile " << htpasswd << endl;
-    hta << "AuthGroupFile /dev/null" << endl;
-    hta << "AuthName \"share " << name << "\"" << endl;
-    hta << "AuthType Basic" << endl;
-    hta << "<Limit GET POST>" << endl;
-    hta << "require valid-user" << endl;
-    hta << "</Limit>" << endl;
-    hta.close();
-
-
-    try
-    {
-        cerr <<  "copy script" << endl;
+        try
         {
-            ScpProcess(script_fn_local, Config::makePath("shares/create_share.sh")).run();
-        }
-        cerr << "call script" << endl;
 
-        {
-            int i  = 0;
+
+            string fn_htpasswd = "~/shares/htpasswd." + name;
+            string fn_htaccess = "~/public_html/shares/" + name + ".htaccess";
+
             SshProcess ssh(Config::makeUrl());
             ssh.run();
             ssh.write("set -xe");
             ssh.write("mkdir -p ~/public_html/shares/" + name);
             ssh.write("mkdir -p ~/shares");
-            BOOST_FOREACH(const user_t& user, users)
-            {
-                stringstream ss;
-                ss << "htpasswd " << (i++ ? "" : "-c") << " -b " << htpasswd << " \"" << user.name() << "\" \"" << user.password() << "\"";
-                ssh.write(ss.str());
-            }
-            //ssh.write("date > ~/iwashere");
-            //ssh.write("exit 0");
+            ssh.write(str(format("if [ -f %1% ]; then rm %1%; fi") % fn_htpasswd));
+            ssh.write(str(format("if [ -f %1% ]; then rm %1%; fi") % fn_htaccess));
+            ssh.write("true");
+
             ssh.join();
         }
-        cerr << "copy htaccess" << endl;
+        catch (ProcessException& e)
+        {
+            cerr << "Exception: " << e.what() << endl;
+            throw;
+        }
 
-        ScpProcess("htaccess", Config::makePath(htaccess)).run();
     }
-    catch (ProcessException& e)
+    else
     {
-        cerr << "Exception: " << e.what() << endl;
-        throw;
+
+        string htpasswd("/home/" + Config::getUsername() + "/shares/htpasswd."+name);
+        string htaccess("public_html/shares/"+name+"/.htaccess");
+
+
+        ofstream hta("htaccess");
+        //hta << "Option +Indexes" << endl;
+        //hta << "IndexOptions -FancyIndexing" << endl;
+        hta << "AuthUserFile " << htpasswd << endl;
+        hta << "AuthGroupFile /dev/null" << endl;
+        hta << "AuthName \"share " << name << "\"" << endl;
+        hta << "AuthType Basic" << endl;
+        hta << "<Limit GET POST>" << endl;
+        hta << "require valid-user" << endl;
+        hta << "</Limit>" << endl;
+        hta.close();
+
+
+        try
+        {
+
+            cerr << "call script" << endl;
+
+            {
+                int i  = 0;
+                SshProcess ssh(Config::makeUrl());
+                ssh.run();
+                ssh.write("set -xe");
+                ssh.write("mkdir -p ~/public_html/shares/" + name);
+                ssh.write("mkdir -p ~/shares");
+
+                BOOST_FOREACH(const user_t& user, users)
+                {
+                    ssh.write(str(format("htpasswd %1% -b %2% \"%3%\" \"%4%\"") % (i++ ? "" : "-c") % htpasswd % user.name() % user.password() ));
+                }
+
+                ssh.join();
+            }
+            cerr << "copy htaccess" << endl;
+
+            ScpProcess("htaccess", Config::makePath(htaccess)).run();
+        }
+        catch (ProcessException& e)
+        {
+            cerr << "Exception: " << e.what() << endl;
+            throw;
+        }
     }
 }
 
-void delete_share(const share_t& share, bool keep_data) {
+void delete_share(const share_t& share, bool keep_data)
+{
 
-    try {
+    try
+    {
+        string fn_htpasswd = "~/shares/htpasswd." + share.name();
+        string sharedir = "~/public_html/shares/" + share.name();
+        string deldir = "~/shares/deleted_shares/";
+
+
         SshProcess ssh(Config::makeUrl());
         ssh.run();
-        ssh.write("rm ~/shares/htpasswd." + share.name());
 
-        if (keep_data) {
+        ssh.write(str(format("if [ -f %1% ]; then rm %1%; fi") % fn_htpasswd));
 
-            string sharedir = "~/public_html/shares/" + share.name();
-            string deldir = "~/shares/deleted_shares/";
-
-            ssh.write("if [ -d " + sharedir + " ]; then mkdir -p " + deldir + " ; mv "+sharedir + " " + deldir + "; fi");
+        if (keep_data)
+        {
+            ssh.write(str(format("if [ -d %1% ]; then mkdir -p %2%; mv %1% %2%; fi") % sharedir % deldir));
         }
-        else {
-            ssh.write("rm -rf ~/public_html/shares/" + share.name());
+        else
+        {
+            ssh.write("rm -rf " + sharedir);
         }
 
         ssh.join();
     }
-    catch (ProcessException& e) {
+    catch (ProcessException& e)
+    {
         cerr << "Exception: " << e.what() << endl;
         throw;
     }

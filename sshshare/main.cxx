@@ -354,8 +354,7 @@ static void cb_apply (GtkWidget *, GtkWidget *win)
 
     if (share.users().user().size() == 0)
     {
-        dialog_warn(win, "No users specified; cannot continue");
-        return;
+        dialog_warn(win, "No users specified; Will not create htpasswd/htaccess.");
     }
 
     try
