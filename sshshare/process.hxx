@@ -82,7 +82,21 @@ class Process
     const static bool print_exit_details = false;
 
 public:
-    Process(bool ro = true, bool re = false, bool pty=false);
+    enum STDIN_MODE {
+        STDIN_PIPE
+    };
+    enum STDOUT_MODE {
+        STDOUT_KEEP,
+        STDOUT_PIPE
+    } stdout_mode;
+    enum STDERR_MODE {
+        STDERR_KEEP,
+        STDERR_PIPE,
+        STDERR_MERGE_STDOUT
+    } stderr_mode;
+
+public:
+    Process(STDOUT_MODE stdout_mode, STDERR_MODE stderr_mode, bool pty=false);
     virtual ~Process();
 
     virtual void onStateChange() = 0;
@@ -112,8 +126,6 @@ private:
     int pid;
 
     int status_last_wait;
-    bool redirect_stdout;
-    bool redirect_stderr;
     bool use_pty;
     bool running;
 };

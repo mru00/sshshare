@@ -12,7 +12,8 @@ private:
 public:
 
     ScpProcess(const std::string& from1, const std::string& to1)
-        : from(from1), to(to1) {};
+        : from(from1), to(to1)
+        , LinewiseProcess(Process::STDOUT_PIPE, Process::STDERR_KEEP) {};
 
 
     int run()

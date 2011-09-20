@@ -6,7 +6,7 @@
 class LinewiseProcess : public Process
 {
 public:
-    LinewiseProcess();
+    LinewiseProcess(Process::STDOUT_MODE mo, Process::STDERR_MODE me);
     virtual ~LinewiseProcess();
 
     virtual void onStdout(const std::string& line) = 0;

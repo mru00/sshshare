@@ -1,1 +1,3 @@
 SUBDIRS = sshshare
+ACLOCAL_AMFLAGS = -I .
+

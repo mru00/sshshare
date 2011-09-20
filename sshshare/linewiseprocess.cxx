@@ -15,7 +15,7 @@
 using namespace std;
 
 
-LinewiseProcess::LinewiseProcess() : Process(true, true, true)
+LinewiseProcess::LinewiseProcess(Process::STDOUT_MODE mo, Process::STDERR_MODE me) : Process(mo, me, true)
 {
     //ctor
 }

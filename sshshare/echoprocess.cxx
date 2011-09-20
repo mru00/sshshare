@@ -4,6 +4,7 @@
 #include "echoprocess.hxx"
 
 EchoProcess::EchoProcess()
+: LinewiseProcess(Process::STDOUT_KEEP, Process::STDERR_KEEP)
 {
     //ctor
 }

@@ -701,6 +701,7 @@ int main (int argc, char *argv[])
 
         SshProcess ssh(Config::makeUrl());
         ssh.run();
+        ssh.write("set -xe");
         ssh.write("cp ~/shares/sharedata.xml ~/shares/sharedata-" +date+ ".xml");
         ssh.join();
 

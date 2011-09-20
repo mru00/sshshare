@@ -15,7 +15,7 @@
 using namespace std;
 
 SshProcess::SshProcess(const std::string& url)
-    :Process(true, true, false)
+    :Process(Process::STDOUT_KEEP, Process::STDERR_KEEP, false)
     , url(url)
 {
     //ctor

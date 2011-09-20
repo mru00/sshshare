@@ -20,12 +20,12 @@
 using namespace std;
 
 
-Process::Process(bool ro, bool re, bool pty)
+Process::Process(STDOUT_MODE stdout_mode, STDERR_MODE stderr_mode, bool pty)
     : p_in(NULL)
     , p_out(NULL)
     , p_err(NULL)
-    , redirect_stdout(ro)
-    , redirect_stderr(re)
+    , stdout_mode(stdout_mode)
+    , stderr_mode(stderr_mode)
     , use_pty(pty)
     , running(false)
 {
@@ -53,23 +53,26 @@ void Process::start_with_pty(const char* program, char* argv[])
         onFail(errno);
         throw ProcessException(StatusCode(errno), strerror(errno));
     }
-    if (redirect_stderr)
-    {
+    switch (stderr_mode) {
+
+      case STDERR_PIPE:
         if (pipe(pfd_err))
-        {
+          {
             perror("pipe err failed!");
             onFail(errno);
             throw ProcessException(StatusCode(errno), strerror(errno));
-        }
-    }
-    else
-    {
-        parent_stderr = dup(STDERR_FILENO);
-        if (parent_stderr < 0)
-        {
-            perror ("ERROR saving old STDERR");
-            throw ProcessException(StatusCode(errno), strerror(errno));
-        }
+          }
+        break;
+      case STDERR_KEEP:
+          {
+            parent_stderr = dup(STDERR_FILENO);
+            if (parent_stderr < 0)
+              {
+                perror ("ERROR saving old STDERR");
+                throw ProcessException(StatusCode(errno), strerror(errno));
+              }
+          }
+        break;
     }
 
     cout << "using pseudoterminal" << endl;
@@ -89,15 +92,24 @@ void Process::start_with_pty(const char* program, char* argv[])
         close(pfd_in[1]);
         close(pfd_err[0]);
 
-
         if (dup2 (pfd_in[0], STDIN_FILENO) < 0)
         {
             perror ("ERROR redirecting stdin");
             exit(10);
         }
 
+        int stderr_target;
+        switch (stderr_mode) {
+          case STDERR_KEEP:
+            stderr_target = parent_stderr;
+            break;
+          case STDERR_PIPE:
+            stderr_target = pfd_err[1];
+            close(parent_stderr);
+            break;
+        }
         // either redirect to stderr of parent, or to pipe
-        if (dup2 (redirect_stderr?pfd_err[1]:parent_stderr, STDERR_FILENO) < 0)
+        if (dup2 (stderr_target, STDERR_FILENO) < 0)
         {
             perror ("ERROR redirecting STDERR");
             exit(12);
@@ -108,8 +120,6 @@ void Process::start_with_pty(const char* program, char* argv[])
 
         close(pfd_in[0]);
         close(pfd_err[1]);
-
-        if (redirect_stderr) close(parent_stderr);
 
         if (execv(program, argv))
         {
@@ -127,14 +137,14 @@ void Process::start_with_pty(const char* program, char* argv[])
     p_in = fdopen(pfd_in[1], "w");
     p_out = fdopen(fd_out, "r");
 
-    if (redirect_stderr)
-    {
-        p_err = fdopen(pfd_err[0], "r");
-    }
-    else
-    {
+    switch (stderr_mode) {
+      case STDERR_KEEP:
         p_err = NULL;
         close(pfd_err[0]);
+        break;
+      case STDERR_PIPE:
+        p_err = fdopen(pfd_err[0], "r");
+        break;
     }
 }
 
@@ -144,7 +154,7 @@ void Process::start_without_pty(const char* program, char* argv[])
     int pfd_in[2];
     int pfd_out[2];
     int pfd_err[2];
-    int parent_stderr = -1;
+    int parent_stderr = -1, parent_stdout = -1;
 
     onStateChange();
 
@@ -155,32 +165,36 @@ void Process::start_without_pty(const char* program, char* argv[])
         throw ProcessException(StatusCode(errno), strerror(errno));
     }
 
-    if (pipe(pfd_out))
-    {
-        perror("pipe out failed!");
-        onFail(errno);
-        throw ProcessException(StatusCode(errno), strerror(errno));
+    switch(stdout_mode) {
+      case STDOUT_PIPE:
+
+        if (pipe(pfd_out))
+          {
+            perror("pipe out failed!");
+            onFail(errno);
+            throw ProcessException(StatusCode(errno), strerror(errno));
+          }
+
+        break;
+      case STDOUT_KEEP:
+        parent_stdout = dup(STDOUT_FILENO);
+        break;
     }
 
-    if (redirect_stderr)
-    {
+    switch (stderr_mode) {
+
+      case STDERR_PIPE:
         if (pipe(pfd_err))
-        {
+          {
             perror("pipe err failed!");
             onFail(errno);
             throw ProcessException(StatusCode(errno), strerror(errno));
-        }
+          }
+        break;
+      case STDERR_KEEP:
+            parent_stderr = dup(STDERR_FILENO);
+        break;
     }
-    else
-    {
-        parent_stderr = dup(STDERR_FILENO);
-        if (parent_stderr < 0)
-        {
-            perror ("ERROR saving old STDERR");
-            throw ProcessException(StatusCode(errno), strerror(errno));
-        }
-    }
-
 
 
     cout << "NOT using pseudoterminal" << endl;
@@ -208,18 +222,39 @@ void Process::start_without_pty(const char* program, char* argv[])
             perror ("ERROR redirecting stdin");
             exit(10);
         }
-
-        if (dup2 (pfd_out[1], STDOUT_FILENO) < 0)
+      
+        int stdout_target;
+        switch (stdout_mode) {
+          case STDOUT_KEEP:
+            stdout_target = parent_stdout;
+            cout << "jeep"<<endl;
+            break;
+          case STDERR_PIPE:
+            cout << "pipe" << endl;
+            stdout_target = pfd_out[1];
+            break;
+        }
+        if (dup2 (stdout_target, STDOUT_FILENO) < 0)
         {
             perror ("ERROR redirecting stdout");
             exit(11);
         }
 
+        int stderr_target;
+        switch (stderr_mode) {
+          case STDERR_KEEP:
+            stderr_target = parent_stderr;
+            break;
+          case STDERR_PIPE:
+            stderr_target = pfd_err[1];
+            close(parent_stderr);
+            break;
+        }
         // either redirect to stderr of parent, or to pipe
-        if (dup2 (redirect_stderr? pfd_err[1] : parent_stderr, STDERR_FILENO) < 0)
+        if (dup2 (stderr_target, STDOUT_FILENO) < 0)
         {
-            perror ("ERROR redirecting STDERR");
-            exit(12);
+            perror ("ERROR redirecting stderr");
+            exit(11);
         }
 
         setvbuf (stdout, NULL, _IONBF, 0);
@@ -228,8 +263,6 @@ void Process::start_without_pty(const char* program, char* argv[])
         close(pfd_in[0]);
         close(pfd_out[1]);
         close(pfd_err[1]);
-
-        if (redirect_stderr) close(parent_stderr);
 
         if (execv(program, argv))
         {
@@ -246,23 +279,33 @@ void Process::start_without_pty(const char* program, char* argv[])
     close(pfd_err[1]);
 
     p_in = fdopen(pfd_in[1], "w");
-    p_out = fdopen(pfd_out[0], "r");
-
-    if (redirect_stderr)
-    {
-        p_err = fdopen(pfd_err[0], "r");
+    
+    switch(stdout_mode) {
+      case STDOUT_KEEP:
+        p_out = NULL;
+        close(pfd_out[0]);
+        break;
+      case STDOUT_PIPE:
+        p_out = fdopen(pfd_out[0], "r");
+        break;
     }
-    else
-    {
+
+
+    switch (stderr_mode) {
+      case STDERR_KEEP:
         p_err = NULL;
         close(pfd_err[0]);
+        break;
+      case STDERR_PIPE:
+        p_err = fdopen(pfd_err[0], "r");
+        break;
     }
 }
 
 
 void Process::start(const string& binary, const vector<string>& argv)
 {
-
+    cerr << "staring binary: " << binary << endl;
     char* c_argv[argv.size()+1];
     int i = 0;
     for (vector<string>::const_iterator it = argv.begin(); it!= argv.end(); it ++ )
@@ -279,7 +322,7 @@ void Process::start(const string& binary, const vector<string>& argv)
 
 
     setvbuf ( p_in , NULL , _IONBF , 0);
-    setvbuf ( p_out , NULL , _IONBF , 0);
+    if(p_out) setvbuf ( p_out , NULL , _IONBF , 0);
     if(p_err) setvbuf ( p_err , NULL , _IONBF , 0);
 
     if (true || print_exit_details)
