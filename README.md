@@ -34,15 +34,17 @@ execute
 install missing dependencies, as ./configure requires.
 to cut it short:
    
-     sudo apt-get install libboost-regex-dev libboost-filesystem-dev libxerces-c-dev xsdcxx
+     sudo apt-get install libboost-regex-dev libboost-filesystem-dev libxerces-c-dev xsdcxx libgtk2.0-dev
 
+
+     ./configure
      make
 
 After running it the first time, an example configuration file will be 
-created at `$HOME/.sshshare\_config.xml`
+created at `$HOME/.sshshare_config.xml`
 
 Kill, yes, kill the current runnning instance, and edit the configuration
-files to your needs (username and server are required)
+files to your needs (username and server are required).
 
 
 Screenshots
