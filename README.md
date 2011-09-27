@@ -21,6 +21,30 @@ For ssh communications, it is assumed that you use public key authentication, be
 
 The schema definitions (*.xsd) are downloaded from a hardcoded address when the xml files are loaded.
 
+
+Installation & Setup
+--------------------
+
+download & extract the latest `sshshare-x.x.x.x.tar.gz`.
+execute 
+
+
+     ./configure
+
+install missing dependencies, as ./configure requires.
+to cut it short:
+   
+     sudo apt-get install libboost-regex-dev libboost-filesystem-dev libxerces-c-dev xsdcxx
+
+     make
+
+After running it the first time, an example configuration file will be 
+created at `$HOME/.sshshare\_config.xml`
+
+Kill, yes, kill the current runnning instance, and edit the configuration
+files to your needs (username and server are required)
+
+
 Screenshots
 -----------
 
@@ -58,3 +82,5 @@ The files sshshare.hxx and sshshare.cxx are generated with the xsdcxx tool. The 
 `makexsd.sh` command.
 
     sudo apt-get install xsdcxx libxerces-c-dev
+
+
